@@ -1,0 +1,545 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Grammar
+
+Rule 0     S' -> s
+Rule 1     s -> classexp
+Rule 2     classexp -> class
+Rule 3     classexp -> intersection
+Rule 4     classexp -> union
+Rule 5     classexp -> restriction
+Rule 6     classexp -> complement
+Rule 7     class -> ID
+Rule 8     intersection -> INTERSECTION ( classlist )
+Rule 9     union -> UNION ( classlist )
+Rule 10    restriction -> RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp )
+Rule 11    restriction -> RESTRICTION ( ONPROP = propexp , VALUE = classexp )
+Rule 12    complement -> COMPLEMENT ( classexp )
+Rule 13    propexp -> ID
+Rule 14    propexp -> INVERSE ( ID )
+Rule 15    classlist -> classexp , classlist
+Rule 16    classlist -> classexp
+
+Terminals, with rules where they appear
+
+(                    : 8 9 10 11 12 14
+)                    : 8 9 10 11 12 14
+,                    : 10 11 15
+=                    : 10 10 11 11
+COMPLEMENT           : 12
+ID                   : 7 13 14
+INTERSECTION         : 8
+INVERSE              : 14
+ONPROP               : 10 11
+RESTRICTION          : 10 11
+SOMEVAL              : 10
+UNION                : 9
+VALUE                : 11
+error                : 
+
+Nonterminals, with rules where they appear
+
+class                : 2
+classexp             : 1 10 11 12 15 16
+classlist            : 8 9 15
+complement           : 6
+intersection         : 3
+propexp              : 10 11
+restriction          : 5
+s                    : 0
+union                : 4
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . s
+    (1) s -> . classexp
+    (2) classexp -> . class
+    (3) classexp -> . intersection
+    (4) classexp -> . union
+    (5) classexp -> . restriction
+    (6) classexp -> . complement
+    (7) class -> . ID
+    (8) intersection -> . INTERSECTION ( classlist )
+    (9) union -> . UNION ( classlist )
+    (10) restriction -> . RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp )
+    (11) restriction -> . RESTRICTION ( ONPROP = propexp , VALUE = classexp )
+    (12) complement -> . COMPLEMENT ( classexp )
+
+    ID              shift and go to state 8
+    INTERSECTION    shift and go to state 9
+    UNION           shift and go to state 10
+    RESTRICTION     shift and go to state 11
+    COMPLEMENT      shift and go to state 12
+
+    s                              shift and go to state 1
+    classexp                       shift and go to state 2
+    class                          shift and go to state 3
+    intersection                   shift and go to state 4
+    union                          shift and go to state 5
+    restriction                    shift and go to state 6
+    complement                     shift and go to state 7
+
+state 1
+
+    (0) S' -> s .
+
+
+
+state 2
+
+    (1) s -> classexp .
+
+    $end            reduce using rule 1 (s -> classexp .)
+
+
+state 3
+
+    (2) classexp -> class .
+
+    $end            reduce using rule 2 (classexp -> class .)
+    ,               reduce using rule 2 (classexp -> class .)
+    )               reduce using rule 2 (classexp -> class .)
+
+
+state 4
+
+    (3) classexp -> intersection .
+
+    $end            reduce using rule 3 (classexp -> intersection .)
+    ,               reduce using rule 3 (classexp -> intersection .)
+    )               reduce using rule 3 (classexp -> intersection .)
+
+
+state 5
+
+    (4) classexp -> union .
+
+    $end            reduce using rule 4 (classexp -> union .)
+    ,               reduce using rule 4 (classexp -> union .)
+    )               reduce using rule 4 (classexp -> union .)
+
+
+state 6
+
+    (5) classexp -> restriction .
+
+    $end            reduce using rule 5 (classexp -> restriction .)
+    ,               reduce using rule 5 (classexp -> restriction .)
+    )               reduce using rule 5 (classexp -> restriction .)
+
+
+state 7
+
+    (6) classexp -> complement .
+
+    $end            reduce using rule 6 (classexp -> complement .)
+    ,               reduce using rule 6 (classexp -> complement .)
+    )               reduce using rule 6 (classexp -> complement .)
+
+
+state 8
+
+    (7) class -> ID .
+
+    $end            reduce using rule 7 (class -> ID .)
+    ,               reduce using rule 7 (class -> ID .)
+    )               reduce using rule 7 (class -> ID .)
+
+
+state 9
+
+    (8) intersection -> INTERSECTION . ( classlist )
+
+    (               shift and go to state 13
+
+
+state 10
+
+    (9) union -> UNION . ( classlist )
+
+    (               shift and go to state 14
+
+
+state 11
+
+    (10) restriction -> RESTRICTION . ( ONPROP = propexp , SOMEVAL = classexp )
+    (11) restriction -> RESTRICTION . ( ONPROP = propexp , VALUE = classexp )
+
+    (               shift and go to state 15
+
+
+state 12
+
+    (12) complement -> COMPLEMENT . ( classexp )
+
+    (               shift and go to state 16
+
+
+state 13
+
+    (8) intersection -> INTERSECTION ( . classlist )
+    (15) classlist -> . classexp , classlist
+    (16) classlist -> . classexp
+    (2) classexp -> . class
+    (3) classexp -> . intersection
+    (4) classexp -> . union
+    (5) classexp -> . restriction
+    (6) classexp -> . complement
+    (7) class -> . ID
+    (8) intersection -> . INTERSECTION ( classlist )
+    (9) union -> . UNION ( classlist )
+    (10) restriction -> . RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp )
+    (11) restriction -> . RESTRICTION ( ONPROP = propexp , VALUE = classexp )
+    (12) complement -> . COMPLEMENT ( classexp )
+
+    ID              shift and go to state 8
+    INTERSECTION    shift and go to state 9
+    UNION           shift and go to state 10
+    RESTRICTION     shift and go to state 11
+    COMPLEMENT      shift and go to state 12
+
+    classlist                      shift and go to state 17
+    classexp                       shift and go to state 18
+    class                          shift and go to state 3
+    intersection                   shift and go to state 4
+    union                          shift and go to state 5
+    restriction                    shift and go to state 6
+    complement                     shift and go to state 7
+
+state 14
+
+    (9) union -> UNION ( . classlist )
+    (15) classlist -> . classexp , classlist
+    (16) classlist -> . classexp
+    (2) classexp -> . class
+    (3) classexp -> . intersection
+    (4) classexp -> . union
+    (5) classexp -> . restriction
+    (6) classexp -> . complement
+    (7) class -> . ID
+    (8) intersection -> . INTERSECTION ( classlist )
+    (9) union -> . UNION ( classlist )
+    (10) restriction -> . RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp )
+    (11) restriction -> . RESTRICTION ( ONPROP = propexp , VALUE = classexp )
+    (12) complement -> . COMPLEMENT ( classexp )
+
+    ID              shift and go to state 8
+    INTERSECTION    shift and go to state 9
+    UNION           shift and go to state 10
+    RESTRICTION     shift and go to state 11
+    COMPLEMENT      shift and go to state 12
+
+    classlist                      shift and go to state 19
+    classexp                       shift and go to state 18
+    class                          shift and go to state 3
+    intersection                   shift and go to state 4
+    union                          shift and go to state 5
+    restriction                    shift and go to state 6
+    complement                     shift and go to state 7
+
+state 15
+
+    (10) restriction -> RESTRICTION ( . ONPROP = propexp , SOMEVAL = classexp )
+    (11) restriction -> RESTRICTION ( . ONPROP = propexp , VALUE = classexp )
+
+    ONPROP          shift and go to state 20
+
+
+state 16
+
+    (12) complement -> COMPLEMENT ( . classexp )
+    (2) classexp -> . class
+    (3) classexp -> . intersection
+    (4) classexp -> . union
+    (5) classexp -> . restriction
+    (6) classexp -> . complement
+    (7) class -> . ID
+    (8) intersection -> . INTERSECTION ( classlist )
+    (9) union -> . UNION ( classlist )
+    (10) restriction -> . RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp )
+    (11) restriction -> . RESTRICTION ( ONPROP = propexp , VALUE = classexp )
+    (12) complement -> . COMPLEMENT ( classexp )
+
+    ID              shift and go to state 8
+    INTERSECTION    shift and go to state 9
+    UNION           shift and go to state 10
+    RESTRICTION     shift and go to state 11
+    COMPLEMENT      shift and go to state 12
+
+    classexp                       shift and go to state 21
+    class                          shift and go to state 3
+    intersection                   shift and go to state 4
+    union                          shift and go to state 5
+    restriction                    shift and go to state 6
+    complement                     shift and go to state 7
+
+state 17
+
+    (8) intersection -> INTERSECTION ( classlist . )
+
+    )               shift and go to state 22
+
+
+state 18
+
+    (15) classlist -> classexp . , classlist
+    (16) classlist -> classexp .
+
+    ,               shift and go to state 23
+    )               reduce using rule 16 (classlist -> classexp .)
+
+
+state 19
+
+    (9) union -> UNION ( classlist . )
+
+    )               shift and go to state 24
+
+
+state 20
+
+    (10) restriction -> RESTRICTION ( ONPROP . = propexp , SOMEVAL = classexp )
+    (11) restriction -> RESTRICTION ( ONPROP . = propexp , VALUE = classexp )
+
+    =               shift and go to state 25
+
+
+state 21
+
+    (12) complement -> COMPLEMENT ( classexp . )
+
+    )               shift and go to state 26
+
+
+state 22
+
+    (8) intersection -> INTERSECTION ( classlist ) .
+
+    $end            reduce using rule 8 (intersection -> INTERSECTION ( classlist ) .)
+    ,               reduce using rule 8 (intersection -> INTERSECTION ( classlist ) .)
+    )               reduce using rule 8 (intersection -> INTERSECTION ( classlist ) .)
+
+
+state 23
+
+    (15) classlist -> classexp , . classlist
+    (15) classlist -> . classexp , classlist
+    (16) classlist -> . classexp
+    (2) classexp -> . class
+    (3) classexp -> . intersection
+    (4) classexp -> . union
+    (5) classexp -> . restriction
+    (6) classexp -> . complement
+    (7) class -> . ID
+    (8) intersection -> . INTERSECTION ( classlist )
+    (9) union -> . UNION ( classlist )
+    (10) restriction -> . RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp )
+    (11) restriction -> . RESTRICTION ( ONPROP = propexp , VALUE = classexp )
+    (12) complement -> . COMPLEMENT ( classexp )
+
+    ID              shift and go to state 8
+    INTERSECTION    shift and go to state 9
+    UNION           shift and go to state 10
+    RESTRICTION     shift and go to state 11
+    COMPLEMENT      shift and go to state 12
+
+    classexp                       shift and go to state 18
+    classlist                      shift and go to state 27
+    class                          shift and go to state 3
+    intersection                   shift and go to state 4
+    union                          shift and go to state 5
+    restriction                    shift and go to state 6
+    complement                     shift and go to state 7
+
+state 24
+
+    (9) union -> UNION ( classlist ) .
+
+    $end            reduce using rule 9 (union -> UNION ( classlist ) .)
+    ,               reduce using rule 9 (union -> UNION ( classlist ) .)
+    )               reduce using rule 9 (union -> UNION ( classlist ) .)
+
+
+state 25
+
+    (10) restriction -> RESTRICTION ( ONPROP = . propexp , SOMEVAL = classexp )
+    (11) restriction -> RESTRICTION ( ONPROP = . propexp , VALUE = classexp )
+    (13) propexp -> . ID
+    (14) propexp -> . INVERSE ( ID )
+
+    ID              shift and go to state 29
+    INVERSE         shift and go to state 30
+
+    propexp                        shift and go to state 28
+
+state 26
+
+    (12) complement -> COMPLEMENT ( classexp ) .
+
+    $end            reduce using rule 12 (complement -> COMPLEMENT ( classexp ) .)
+    ,               reduce using rule 12 (complement -> COMPLEMENT ( classexp ) .)
+    )               reduce using rule 12 (complement -> COMPLEMENT ( classexp ) .)
+
+
+state 27
+
+    (15) classlist -> classexp , classlist .
+
+    )               reduce using rule 15 (classlist -> classexp , classlist .)
+
+
+state 28
+
+    (10) restriction -> RESTRICTION ( ONPROP = propexp . , SOMEVAL = classexp )
+    (11) restriction -> RESTRICTION ( ONPROP = propexp . , VALUE = classexp )
+
+    ,               shift and go to state 31
+
+
+state 29
+
+    (13) propexp -> ID .
+
+    ,               reduce using rule 13 (propexp -> ID .)
+
+
+state 30
+
+    (14) propexp -> INVERSE . ( ID )
+
+    (               shift and go to state 32
+
+
+state 31
+
+    (10) restriction -> RESTRICTION ( ONPROP = propexp , . SOMEVAL = classexp )
+    (11) restriction -> RESTRICTION ( ONPROP = propexp , . VALUE = classexp )
+
+    SOMEVAL         shift and go to state 33
+    VALUE           shift and go to state 34
+
+
+state 32
+
+    (14) propexp -> INVERSE ( . ID )
+
+    ID              shift and go to state 35
+
+
+state 33
+
+    (10) restriction -> RESTRICTION ( ONPROP = propexp , SOMEVAL . = classexp )
+
+    =               shift and go to state 36
+
+
+state 34
+
+    (11) restriction -> RESTRICTION ( ONPROP = propexp , VALUE . = classexp )
+
+    =               shift and go to state 37
+
+
+state 35
+
+    (14) propexp -> INVERSE ( ID . )
+
+    )               shift and go to state 38
+
+
+state 36
+
+    (10) restriction -> RESTRICTION ( ONPROP = propexp , SOMEVAL = . classexp )
+    (2) classexp -> . class
+    (3) classexp -> . intersection
+    (4) classexp -> . union
+    (5) classexp -> . restriction
+    (6) classexp -> . complement
+    (7) class -> . ID
+    (8) intersection -> . INTERSECTION ( classlist )
+    (9) union -> . UNION ( classlist )
+    (10) restriction -> . RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp )
+    (11) restriction -> . RESTRICTION ( ONPROP = propexp , VALUE = classexp )
+    (12) complement -> . COMPLEMENT ( classexp )
+
+    ID              shift and go to state 8
+    INTERSECTION    shift and go to state 9
+    UNION           shift and go to state 10
+    RESTRICTION     shift and go to state 11
+    COMPLEMENT      shift and go to state 12
+
+    classexp                       shift and go to state 39
+    class                          shift and go to state 3
+    intersection                   shift and go to state 4
+    union                          shift and go to state 5
+    restriction                    shift and go to state 6
+    complement                     shift and go to state 7
+
+state 37
+
+    (11) restriction -> RESTRICTION ( ONPROP = propexp , VALUE = . classexp )
+    (2) classexp -> . class
+    (3) classexp -> . intersection
+    (4) classexp -> . union
+    (5) classexp -> . restriction
+    (6) classexp -> . complement
+    (7) class -> . ID
+    (8) intersection -> . INTERSECTION ( classlist )
+    (9) union -> . UNION ( classlist )
+    (10) restriction -> . RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp )
+    (11) restriction -> . RESTRICTION ( ONPROP = propexp , VALUE = classexp )
+    (12) complement -> . COMPLEMENT ( classexp )
+
+    ID              shift and go to state 8
+    INTERSECTION    shift and go to state 9
+    UNION           shift and go to state 10
+    RESTRICTION     shift and go to state 11
+    COMPLEMENT      shift and go to state 12
+
+    classexp                       shift and go to state 40
+    class                          shift and go to state 3
+    intersection                   shift and go to state 4
+    union                          shift and go to state 5
+    restriction                    shift and go to state 6
+    complement                     shift and go to state 7
+
+state 38
+
+    (14) propexp -> INVERSE ( ID ) .
+
+    ,               reduce using rule 14 (propexp -> INVERSE ( ID ) .)
+
+
+state 39
+
+    (10) restriction -> RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp . )
+
+    )               shift and go to state 41
+
+
+state 40
+
+    (11) restriction -> RESTRICTION ( ONPROP = propexp , VALUE = classexp . )
+
+    )               shift and go to state 42
+
+
+state 41
+
+    (10) restriction -> RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp ) .
+
+    $end            reduce using rule 10 (restriction -> RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp ) .)
+    ,               reduce using rule 10 (restriction -> RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp ) .)
+    )               reduce using rule 10 (restriction -> RESTRICTION ( ONPROP = propexp , SOMEVAL = classexp ) .)
+
+
+state 42
+
+    (11) restriction -> RESTRICTION ( ONPROP = propexp , VALUE = classexp ) .
+
+    $end            reduce using rule 11 (restriction -> RESTRICTION ( ONPROP = propexp , VALUE = classexp ) .)
+    ,               reduce using rule 11 (restriction -> RESTRICTION ( ONPROP = propexp , VALUE = classexp ) .)
+    )               reduce using rule 11 (restriction -> RESTRICTION ( ONPROP = propexp , VALUE = classexp ) .)
+
