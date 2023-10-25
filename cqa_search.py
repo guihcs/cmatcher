@@ -2,7 +2,7 @@ import itertools
 import torch
 import random
 from torch_geometric.data import Data
-
+from rdflib.term import BNode
 def build_raw_data(idata, cqas):
 
     raw_data = {}
@@ -71,13 +71,14 @@ def pad_edge(t, max_len):
 def pad_dataset(tokenizer, raw_data, stats):
     pd = []
     for cqa, c1, c2, e1, e2 in raw_data:
+
         ids1 = tokenizer(c1, return_tensors='pt')['input_ids']
         ids2 = tokenizer(c2, return_tensors='pt')['input_ids']
         nids1 = pad_seq(ids1, stats['max_len_cqa'])
         nids2 = pad_seq(ids2, stats['max_len_cqa'])
 
-        e1id = tokenizer(e1[0], return_tensors='pt', padding=True)['input_ids']
-        e2id = tokenizer(e2[0], return_tensors='pt', padding=True)['input_ids']
+        e1id = tokenizer(map(lambda x: x if type(x) is not BNode else 'blank node', e1[0]), return_tensors='pt', padding=True)['input_ids']
+        e2id = tokenizer(map(lambda x: x if type(x) is not BNode else 'blank node', e2[0]), return_tensors='pt', padding=True)['input_ids']
         pd1 = pad_seq(e1id, stats['max_feature_len'])
         pd1 = torch.cat([torch.zeros((1, stats['max_feature_len'])), pd1], dim=0)
         pd2 = pad_seq(e2id, stats['max_feature_len'])
@@ -98,24 +99,14 @@ def pad_dataset(tokenizer, raw_data, stats):
 
 class GraphData(Data):
     def __inc__(self, key, value, *args, **kwargs):
-        if key == 'cqs':
-            return self.x_s.size(0)
-        if key == 'cqp':
-            return self.x_p.size(0)
-        if key == 'cqn':
-            return self.x_n.size(0)
+
         if key == 'edge_index_s':
             return self.x_s.size(0)
         if key == 'edge_index_p':
             return self.x_p.size(0)
         if key == 'edge_index_n':
             return self.x_n.size(0)
-        if key == 'edge_feat_s':
-            return self.x_s.size(0)
-        if key == 'edge_feat_p':
-            return self.x_p.size(0)
-        if key == 'edge_feat_n':
-            return self.x_n.size(0)
+
         if key == 'rsi':
             return self.x_s.size(0)
         if key == 'rpi':
@@ -151,21 +142,21 @@ def build_graph_dataset(tokenizer, cqas, idata, raw_data):
         edge1 = torch.LongTensor(rcea[2])
 
         dataset.append(GraphData(
-            rsi=torch.LongTensor([1]),
-            rpi=torch.LongTensor([1]),
-            rni=torch.LongTensor([1]),
-            cqs=c1,
-            cqp=c2,
-            cqn=pids1,
-            x_s=f1,
-            x_p=f2,
-            x_n=pd1,
-            edge_index_s=e1,
-            edge_index_p=e1,
-            edge_index_n=edge1,
-            edge_feat_s=p1,
-            edge_feat_p=p2,
-            edge_feat_n=pd3,
+            rsi=torch.LongTensor([0]),
+            rpi=torch.LongTensor([0]),
+            rni=torch.LongTensor([0]),
+            cqs=c1.long(),
+            cqp=c2.long(),
+            cqn=pids1.long(),
+            x_s=f1.long(),
+            x_p=f2.long(),
+            x_n=pd1.long(),
+            edge_index_s=e1.long(),
+            edge_index_p=e1.long(),
+            edge_index_n=edge1.long(),
+            edge_feat_s=p1.long(),
+            edge_feat_p=p2.long(),
+            edge_feat_n=pd3.long(),
         ))
 
     return dataset

@@ -5,7 +5,7 @@ from termcolor import colored
 import os
 from tqdm.auto import tqdm
 from os import path
-from epc import parser
+from cmatcher.epc import parser
 
 
 def parse_tree(tree, g, ng):
@@ -121,31 +121,6 @@ def pn(n, g, md=2, cd=0):
         pn(o, g, md=md, cd=cd + 1)
 
 
-def to_pyg(tn, ng):
-    sm = {tn: 1}
-    pm = []
-    fm = [[], []]
-    for s, p, o in ng:
-        if type(s) is BNode:
-            sm[s] = 0
-        elif s not in sm:
-            sm[s] = len(sm) + 1
-
-        if type(o) is BNode:
-            sm[o] = 0
-        elif o not in sm:
-            sm[o] = len(sm) + 1
-
-        pm.append(p)
-
-        fm[1].append(sm[s])
-        fm[0].append(sm[o])
-
-    return [x[0] for x in sorted(list(sm.items()), key=lambda x: x[1]) if x[1] != 0], pm, fm
-
-
-
-
 def load_sg(pt, paths):
     data = {}
 
@@ -182,8 +157,6 @@ def load_sg(pt, paths):
             idata[fn][cqa] = dt
 
     return idata
-
-
 
 
 def load_entities(pt, paths):
@@ -251,3 +224,26 @@ def load_cqas(pt):
             idata[fn][cqa] = dt
 
     return idata
+
+
+def to_pyg(tn, ng):
+    sm = {tn: 0}
+    pm = []
+    fm = [[], []]
+    n = [tn]
+    for s, p, o in ng:
+
+        if s not in sm:
+            sm[s] = len(sm)
+            n.append(s)
+
+        if o not in sm:
+            sm[o] = len(sm)
+            n.append(o)
+        pm.append(p)
+
+        fm[1].append(sm[s])
+        fm[0].append(sm[o])
+
+    return n, pm, fm
+
