@@ -77,8 +77,8 @@ def pad_dataset(tokenizer, raw_data, stats):
         nids1 = pad_seq(ids1, stats['max_len_cqa'])
         nids2 = pad_seq(ids2, stats['max_len_cqa'])
 
-        e1id = tokenizer(map(lambda x: x if type(x) is not BNode else 'blank node', e1[0]), return_tensors='pt', padding=True)['input_ids']
-        e2id = tokenizer(map(lambda x: x if type(x) is not BNode else 'blank node', e2[0]), return_tensors='pt', padding=True)['input_ids']
+        e1id = tokenizer(list(map(lambda x: x if type(x) is not BNode else 'blank node', e1[0])), return_tensors='pt', padding=True)['input_ids']
+        e2id = tokenizer(list(map(lambda x: x if type(x) is not BNode else 'blank node', e2[0])), return_tensors='pt', padding=True)['input_ids']
         pd1 = pad_seq(e1id, stats['max_feature_len'])
         pd1 = torch.cat([torch.zeros((1, stats['max_feature_len'])), pd1], dim=0)
         pd2 = pad_seq(e2id, stats['max_feature_len'])
@@ -133,7 +133,7 @@ def build_graph_dataset(tokenizer, cqas, idata, raw_data):
         ids1 = tokenizer(rcqa, return_tensors='pt')['input_ids']
         pids1 = pad_seq(ids1, stats['max_len_cqa'])
 
-        e1id = tokenizer(rcea[0], return_tensors='pt', padding=True)['input_ids']
+        e1id = tokenizer(list(map(lambda x: x if type(x) is not BNode else 'blank node', rcea[0])), return_tensors='pt', padding=True)['input_ids']
         pd1 = pad_seq(e1id, stats['max_feature_len'])
         pd1 = torch.cat([torch.zeros((1, stats['max_feature_len'])), pd1], dim=0)
         e1pid = tokenizer(rcea[1], return_tensors='pt', padding=True)['input_ids']
