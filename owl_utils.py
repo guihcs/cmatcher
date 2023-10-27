@@ -6,6 +6,7 @@ import os
 from tqdm.auto import tqdm
 from os import path
 from cmatcher.epc import parser
+# from epc import parser
 
 
 def parse_tree(tree, g, ng):
@@ -244,6 +245,7 @@ def to_pyg(tn, ng):
 
         fm[1].append(sm[s])
         fm[0].append(sm[o])
+
 
     return n, pm, fm
 

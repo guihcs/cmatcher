@@ -3,6 +3,7 @@
 import ply.yacc as yacc
 
 from cmatcher.elex import tokens
+# from elex import tokens
 
 
 def p_s(p):
