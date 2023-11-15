@@ -1,7 +1,7 @@
 import itertools
 import torch
 import random
-from torch_geometric.data import Data
+from torch_geometric.data import Data, Dataset
 from rdflib.term import BNode
 
 
@@ -176,19 +176,14 @@ class GraphData(Data):
         return super().__inc__(key, value, *args, **kwargs)
 
 
-def build_graph_dataset(tokenizer, cqas, idata, raw_data):
+def build_graph_dataset(tokenizer, idata, raw_data):
     stats = get_dataset_stats(raw_data)
     pd = pad_dataset(tokenizer, raw_data, stats)
     dataset = []
 
     # for cqa, c1, c2, f1, fi1, f2, fi2, p1, pi1, p2, pi2, e1, e2 in pd:
     for data in pd:
-        rn = random.choice(list(cqas.keys()))
-        rcq = random.choice(list(set(cqas[rn].keys()) - {data.anchor_cqa}))
-        rcqa = cqas[rn][rcq]
 
-        ids1 = tokenizer(rcqa, return_tensors='pt')['input_ids']
-        negative_cqa = pad_seq(ids1, stats['max_len_cqa'])
 
         re = random.choice(list(set(idata.keys())))
         rce = random.choice(list(set(idata[re].keys()) - {data.anchor_cqa}))
@@ -202,26 +197,58 @@ def build_graph_dataset(tokenizer, cqas, idata, raw_data):
 
         dataset.append(GraphData(
             rsi=torch.LongTensor([0]),
-            rpi=torch.LongTensor([0]),
             rni=torch.LongTensor([0]),
             cqs=data.anchor_cqa.long(),
-            cqp=data.positive_cqa.long(),
-            cqn=negative_cqa.long(),
             x_s=data.anchor_entities_index.long(),
             x_sf=data.anchor_entities.long(),
-            x_p=data.positive_entities_index.long(),
-            x_pf=data.positive_entities.long(),
             x_n=negative_entity_index.long(),
             x_nf=negative_entity.long(),
             edge_index_s=data.edge1.long(),
-            edge_index_p=data.edge2.long(),
             edge_index_n=edge1.long(),
             edge_feat_s=data.anchor_properties_index.long(),
             edge_feat_sf=data.anchor_properties.long(),
-            edge_feat_p=data.positive_properties_index.long(),
-            edge_feat_pf=data.positive_properties.long(),
             edge_feat_n=negative_property_index.long(),
             edge_feat_nf=negative_property.long(),
         ))
 
     return dataset
+
+
+class CQADataset(Dataset):
+    def __init__(self, tokenizer, idata, raw_data, transform=None, pre_transform=None):
+        super().__init__(None, transform, pre_transform)
+        self.stats = get_dataset_stats(raw_data)
+        self.pd = pad_dataset(tokenizer, raw_data, self.stats)
+        self.idata = idata
+        self.tokenizer = tokenizer
+
+    def len(self):
+        return len(self.pd)
+
+    def get(self, idx):
+        data = self.pd[idx]
+        re = random.choice(list(set(self.idata.keys())))
+        rce = random.choice(list(set(self.idata[re].keys()) - {data.anchor_cqa}))
+        rcea = self.idata[re][rce]
+
+        negative_entity, negative_entity_index = pad_entities(self.tokenizer, rcea[0], self.stats['max_feature_len'])
+
+        negative_property, negative_property_index = pad_entities(self.tokenizer, rcea[1], self.stats['max_property_len'])
+
+        edge1 = torch.LongTensor(rcea[2])
+
+        return GraphData(
+            rsi=torch.LongTensor([0]),
+            rni=torch.LongTensor([0]),
+            cqs=data.anchor_cqa.long(),
+            x_s=data.anchor_entities_index.long(),
+            x_sf=data.anchor_entities.long(),
+            x_n=negative_entity_index.long(),
+            x_nf=negative_entity.long(),
+            edge_index_s=data.edge1.long(),
+            edge_index_n=edge1.long(),
+            edge_feat_s=data.anchor_properties_index.long(),
+            edge_feat_sf=data.anchor_properties.long(),
+            edge_feat_n=negative_property_index.long(),
+            edge_feat_nf=negative_property.long(),
+        )
