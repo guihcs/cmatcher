@@ -65,12 +65,8 @@ def get_dataset_stats(raw_data):
             'max_edge_count': max_edge_count}
 
 
-def pad_seq(t, max_len):
-    return torch.cat([t, torch.zeros((t.shape[0], max_len - t.shape[1]))], dim=1)
-
-
-def pad_seq2(t, max_len):
-    return torch.cat([t, torch.zeros((max_len - t.shape[0], t.shape[1]))], dim=0)
+def pad_seq(t, max_len, pad_token=0):
+    return torch.cat([t, torch.ones((t.shape[0], max_len - t.shape[1]), dtype=torch.long) * pad_token], dim=1)
 
 
 def pad_edge(t, max_len):
@@ -88,54 +84,38 @@ def pad_entities(tokenizer, entities, ml):
 
         ft[i] = sm[f]
     e1id = tokenizer(n, return_tensors='pt', padding=True)['input_ids']
-    return pad_seq(e1id, ml), torch.LongTensor(ft)
+    return pad_seq(e1id, ml, pad_token=tokenizer.pad_token_id), torch.LongTensor(ft)
 
 
 class PadData:
 
-    def __init__(self, cqa_name, anchor_cqa, positive_cqa, anchor_entities, anchor_entities_index,
-                 positive_entities,
-                 positive_entities_index, anchor_properties, anchor_properties_index, positive_properties,
-                 positive_properties_index, edge1, edge2):
+    def __init__(self, cqa_name, anchor_cqa, anchor_entities, anchor_entities_index,
+                  anchor_properties, anchor_properties_index, edge1):
         self.cqa_name = cqa_name
         self.anchor_cqa = anchor_cqa
-        self.positive_cqa = positive_cqa
         self.anchor_entities = anchor_entities
         self.anchor_entities_index = anchor_entities_index
-        self.positive_entities = positive_entities
-        self.positive_entities_index = positive_entities_index
         self.anchor_properties = anchor_properties
         self.anchor_properties_index = anchor_properties_index
-        self.positive_properties = positive_properties
-        self.positive_properties_index = positive_properties_index
         self.edge1 = edge1
-        self.edge2 = edge2
 
 
 def pad_dataset(tokenizer, raw_data, stats) -> list[PadData]:
     pd = []
     for cqa_name, anchor_cqa, positive_cqa, anchor_graph, positive_graph in raw_data:
         ids1 = tokenizer(anchor_cqa, return_tensors='pt')['input_ids']
-        anchor_cqa = pad_seq(ids1, stats['max_len_cqa'])
-
-        ids2 = tokenizer(positive_cqa, return_tensors='pt')['input_ids']
-        positive_cqa = pad_seq(ids2, stats['max_len_cqa'])
+        anchor_cqa = pad_seq(ids1, stats['max_len_cqa'], pad_token=tokenizer.pad_token_id)
 
         anchor_entities, anchor_entities_index = pad_entities(tokenizer, anchor_graph[0], stats['max_feature_len'])
-        positive_entities, positive_entities_index = pad_entities(tokenizer, positive_graph[0],
-                                                                  stats['max_feature_len'])
 
         anchor_properties, anchor_properties_index = pad_entities(tokenizer, anchor_graph[1], stats['max_property_len'])
-        positive_properties, positive_properties_index = pad_entities(tokenizer, positive_graph[1],
-                                                                      stats['max_property_len'])
 
         edge1 = torch.LongTensor(anchor_graph[2])
-        edge2 = torch.LongTensor(positive_graph[2])
 
         pd.append(
-            PadData(cqa_name, anchor_cqa, positive_cqa, anchor_entities, anchor_entities_index, positive_entities,
-                    positive_entities_index, anchor_properties, anchor_properties_index, positive_properties,
-                    positive_properties_index, edge1, edge2))
+            PadData(cqa_name, anchor_cqa, anchor_entities, anchor_entities_index,
+                    anchor_properties, anchor_properties_index,
+                    edge1))
 
     return pd
 
@@ -175,52 +155,17 @@ class GraphData(Data):
 
         return super().__inc__(key, value, *args, **kwargs)
 
-
-def build_graph_dataset(tokenizer, idata, raw_data):
-    stats = get_dataset_stats(raw_data)
-    pd = pad_dataset(tokenizer, raw_data, stats)
-    dataset = []
-
-    # for cqa, c1, c2, f1, fi1, f2, fi2, p1, pi1, p2, pi2, e1, e2 in pd:
-    for data in pd:
-
-
-        re = random.choice(list(set(idata.keys())))
-        rce = random.choice(list(set(idata[re].keys()) - {data.anchor_cqa}))
-        rcea = idata[re][rce]
-
-        negative_entity, negative_entity_index = pad_entities(tokenizer, rcea[0], stats['max_feature_len'])
-
-        negative_property, negative_property_index = pad_entities(tokenizer, rcea[1], stats['max_property_len'])
-
-        edge1 = torch.LongTensor(rcea[2])
-
-        dataset.append(GraphData(
-            rsi=torch.LongTensor([0]),
-            rni=torch.LongTensor([0]),
-            cqs=data.anchor_cqa.long(),
-            x_s=data.anchor_entities_index.long(),
-            x_sf=data.anchor_entities.long(),
-            x_n=negative_entity_index.long(),
-            x_nf=negative_entity.long(),
-            edge_index_s=data.edge1.long(),
-            edge_index_n=edge1.long(),
-            edge_feat_s=data.anchor_properties_index.long(),
-            edge_feat_sf=data.anchor_properties.long(),
-            edge_feat_n=negative_property_index.long(),
-            edge_feat_nf=negative_property.long(),
-        ))
-
-    return dataset
-
-
 class CQADataset(Dataset):
-    def __init__(self, tokenizer, idata, raw_data, transform=None, pre_transform=None):
+    def __init__(self, tokenizer, idata, raw_data, transform=None, pre_transform=None, filter_bn=False):
         super().__init__(None, transform, pre_transform)
         self.stats = get_dataset_stats(raw_data)
         self.pd = pad_dataset(tokenizer, raw_data, self.stats)
         self.idata = idata
         self.tokenizer = tokenizer
+
+        if filter_bn:
+            self.pd = list(filter(lambda x: 'blank node' not in x.anchor_entities, self.pd))
+
 
     def len(self):
         return len(self.pd)
