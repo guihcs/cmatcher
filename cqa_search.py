@@ -164,7 +164,7 @@ class CQADataset(Dataset):
         self.tokenizer = tokenizer
 
         if filter_bn:
-            self.pd = list(filter(lambda x: 'blank node' not in x.anchor_entities, self.pd))
+            self.pd = list(filter(lambda x: 'blank node' not in tokenizer.decode(x.anchor_entities[0]), self.pd))
 
 
     def len(self):

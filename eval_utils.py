@@ -3,10 +3,11 @@ from tqdm.auto import tqdm
 import torch
 from cmatcher.cqa_search import pad_entities, GraphData
 
-def prepare_eval_dataset(data, ifd, tokenizer, mc, mp):
+def prepare_eval_dataset(data, ifd, tokenizer, mc, mp, filter_bn=False):
     ts = []
     graph_data = []
     for s, cm, pm, fm in tqdm(ifd):
+        print(cm)
         pd1, pdi1 = pad_entities(tokenizer, cm, mc)
 
         pd3, pdi3 = pad_entities(tokenizer, pm, mp)
