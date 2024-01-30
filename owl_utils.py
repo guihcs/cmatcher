@@ -6,6 +6,8 @@ import os
 from tqdm.auto import tqdm
 from os import path
 from cmatcher.epc import parser
+from multiprocessing_on_dill import Pool
+
 # from epc import parser
 
 
@@ -249,3 +251,43 @@ def to_pyg(tn, ng):
 
     return n, pm, fm
 
+
+def sg_topg(s, ge, depth=4):
+    eg = Graph()
+    eg.add((s, RDF.type, OWL.Class))
+    add_depth(s, eg, ge, depth)
+    cm, pm, fm = to_pyg(s, eg)
+    return s, cm, pm, fm
+
+
+def build_raw_ts(graph_path, data, workers=2, max_depth=4):
+    graph = Graph().parse(graph_path)
+
+    fres = {}
+    for k in data:
+        tn, ng = data[k]
+        fres[k] = tn
+        for t in ng:
+            graph.add(t)
+
+    mc = 0
+    mp = 0
+    ifd = []
+
+    subjects = set(graph.subjects())
+
+    with Pool(workers) as p:
+        pgs = list(tqdm(p.imap(lambda x: sg_topg(x, graph, depth=max_depth), subjects), total=len(subjects)))
+
+    for s, cm, pm, fm in pgs:
+
+        mcc = max(map(len, cm))
+        mpc = max(map(len, pm))
+        if mcc > mc:
+            mc = mcc
+        if mpc > mp:
+            mp = mpc
+
+        ifd.append((s, cm, pm, fm))
+
+    return ifd, mc, mp, fres
