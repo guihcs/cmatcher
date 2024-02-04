@@ -93,7 +93,7 @@ del conts_cqa_subg[test_ont]
 tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
 
 root_entities, graph_data, cq, cqid, caq, cqmask, tor = prepare_eval_dataset(test_ont, cqas, ifd, tokenizer, mc, mp,
-                                                                             fres, filter_bn=False)
+                                                                             fres)
 
 
 def train_function(config, model, root_entities, graph_data, cq, cqid, res, caq, cqmask, tor):

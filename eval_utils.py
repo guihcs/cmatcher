@@ -1,42 +1,7 @@
-from tqdm.auto import tqdm
 
 import torch
-from cqa_search import pad_entities, GraphData
 from torch_geometric.loader import DataLoader
 import wandb
-
-def prepare_eval_dataset(data, ifd, tokenizer, mc, mp, filter_bn=False):
-    ts = []
-    graph_data = []
-    for s, cm, pm, fm in tqdm(ifd):
-        print(cm)
-        pd1, pdi1 = pad_entities(tokenizer, cm, mc)
-
-        pd3, pdi3 = pad_entities(tokenizer, pm, mp)
-
-        edge1 = torch.LongTensor(fm)
-
-        ts.append(s)
-        graph_data.append(GraphData(
-            rsi=torch.LongTensor([0]),
-            x_s=pdi1.long(),
-            x_sf=pd1.long(),
-            edge_index_s=edge1.long(),
-            edge_feat_s=pdi3.long(),
-            edge_feat_sf=pd3.long(),
-        ))
-
-
-    cq = []
-    cqi = []
-    for k in data:
-        cq.append(k)
-        cqi.append(data[k])
-
-    cqid = tokenizer(cqi, return_tensors='pt', padding=True)['input_ids']
-
-    return ts, graph_data, cq, cqid
-
 
 def embed_cqas(accelerator, model, cqloader):
 
