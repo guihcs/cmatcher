@@ -41,6 +41,7 @@ config = {
     'batch_size': 2,
     'evm_th': 0.9,
     'ev_sim_threshold': 0.8,
+    'sim_margin': 0.8,
     'depth': 1
 }
 
