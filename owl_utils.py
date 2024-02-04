@@ -124,17 +124,17 @@ def pn(n, g, md=2, cd=0):
         pn(o, g, md=md, cd=cd + 1)
 
 
-def load_sg(pt, paths):
+def load_sg(entities_path, ontology_paths):
     data = {}
 
     graphs = {}
 
-    for p, d, fs in tqdm(list(os.walk(pt))):
+    for p, d, fs in tqdm(list(os.walk(entities_path))):
 
         for f in fs:
 
             if f not in graphs:
-                graphs[f] = Graph().parse(paths[f])
+                graphs[f] = Graph().parse(ontology_paths[f])
 
             g = graphs[f]
             cqa = p.split('/')[-1]
@@ -162,17 +162,17 @@ def load_sg(pt, paths):
     return idata
 
 
-def load_entities(pt, paths):
+def load_entities(entities_path, ontologies_path, max_depth=4):
     data = {}
 
     graphs = {}
 
-    for p, d, fs in tqdm(list(os.walk(pt))):
+    for p, d, fs in tqdm(list(os.walk(entities_path))):
 
         for f in fs:
 
             if f not in graphs:
-                graphs[f] = Graph().parse(paths[f])
+                graphs[f] = Graph().parse(ontologies_path[f])
 
             g = graphs[f]
             cqa = p.split('/')[-1]
@@ -186,7 +186,7 @@ def load_entities(pt, paths):
 
                 tn = parse_tree(tree, g, ng)
 
-                add_depth(tn, ng, g, 4)
+                add_depth(tn, ng, g, max_depth)
 
                 cm, pm, fm = to_pyg(tn, ng)
 
@@ -291,3 +291,57 @@ def build_raw_ts(graph_path, data, workers=2, max_depth=4):
         ifd.append((s, cm, pm, fm))
 
     return ifd, mc, mp, fres
+
+
+
+def prepare_eval_dataset(test_ont, cqas, ifd, tokenizer, mc, mp, fres, filter_bn=True):
+    ts = []
+    graph_data = []
+    for s, cm, pm, fm in tqdm(ifd):
+        pd1, pdi1 = pad_entities(tokenizer, cm, mc)
+
+        pd3, pdi3 = pad_entities(tokenizer, pm, mp)
+
+        edge1 = torch.LongTensor(fm)
+
+        ts.append(s)
+        graph_data.append(GraphData(
+            rsi=torch.LongTensor([0]),
+            x_s=pdi1.long(),
+            x_sf=pd1.long(),
+            edge_index_s=edge1.long(),
+            edge_feat_s=pdi3.long(),
+            edge_feat_sf=pd3.long(),
+        ))
+
+    cq = []
+    cqi = []
+
+    tor = list(set(cqas.keys()) - {test_ont})
+    aqi = [[] for _ in range(len(tor))]
+    cqmask = []
+
+    for k in cqas[test_ont]:
+        if filter_bn and type(fres[k]) is BNode:
+            fres.pop(k, None)
+            continue
+
+        cq.append(k)
+        cqi.append(cqas[test_ont][k])
+
+        ml = []
+        for i, t in enumerate(tor):
+            if k in cqas[t]:
+                ml.append(1)
+                aqi[i].append(cqas[t][k])
+            else:
+                ml.append(0)
+                aqi[i].append('')
+
+        cqmask.append(ml)
+
+    cqid = tokenizer(cqi, return_tensors='pt', padding=True)['input_ids']
+
+    caq = [tokenizer(a, return_tensors='pt', padding=True)['input_ids'] for a in aqi]
+
+    return ts, graph_data, cq, cqid, caq, cqmask, tor

@@ -197,3 +197,58 @@ class CQADataset(Dataset):
             edge_feat_n=negative_property_index.long(),
             edge_feat_nf=negative_property.long(),
         )
+
+
+
+
+def prepare_eval_dataset(test_ont, cqas, ifd, tokenizer, mc, mp, fres, filter_bn=True):
+    ts = []
+    graph_data = []
+    for s, cm, pm, fm in ifd:
+        pd1, pdi1 = pad_entities(tokenizer, cm, mc)
+
+        pd3, pdi3 = pad_entities(tokenizer, pm, mp)
+
+        edge1 = torch.LongTensor(fm)
+
+        ts.append(s)
+        graph_data.append(GraphData(
+            rsi=torch.LongTensor([0]),
+            x_s=pdi1.long(),
+            x_sf=pd1.long(),
+            edge_index_s=edge1.long(),
+            edge_feat_s=pdi3.long(),
+            edge_feat_sf=pd3.long(),
+        ))
+
+    cq = []
+    cqi = []
+
+    tor = list(set(cqas.keys()) - {test_ont})
+    aqi = [[] for _ in range(len(tor))]
+    cqmask = []
+
+    for k in cqas[test_ont]:
+        if filter_bn and type(fres[k]) is BNode:
+            fres.pop(k, None)
+            continue
+
+        cq.append(k)
+        cqi.append(cqas[test_ont][k])
+
+        ml = []
+        for i, t in enumerate(tor):
+            if k in cqas[t]:
+                ml.append(1)
+                aqi[i].append(cqas[t][k])
+            else:
+                ml.append(0)
+                aqi[i].append('')
+
+        cqmask.append(ml)
+
+    cqid = tokenizer(cqi, return_tensors='pt', padding=True)['input_ids']
+
+    caq = [tokenizer(a, return_tensors='pt', padding=True)['input_ids'] for a in aqi]
+
+    return ts, graph_data, cq, cqid, caq, cqmask, tor
