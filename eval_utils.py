@@ -97,7 +97,7 @@ def eval_test(accelerator, model, cqloader, graph_loader, cq, root_entities, res
         bv = torch.tensor(fms).argmax().item()
 
         accelerator.print(f'bt: {bv * 0.05:.2f} avgp: {avgps[bv]:.2f}, rec: {rcs[bv]:.2f}, afm: {fms[bv]:.2f}')
-        wandb.log({'bt': bv * 0.05, 'avgp': avgps[bv], 'rec': rcs[bv], 'afm': fms[bv]})
+        wandb.log({'global/bt': bv * 0.05, 'global/avgp': avgps[bv], 'global/rec': rcs[bv], 'global/afm': fms[bv]})
 
         gavgps = 0
         grcs = 0
@@ -118,8 +118,8 @@ def eval_test(accelerator, model, cqloader, graph_loader, cq, root_entities, res
             bv = torch.tensor(fms).argmax().item()
             accelerator.print(
                 f'{tor[i]} bt: {bv * 0.05:.2f} avgp: {avgps[bv]:.2f}, rec: {rcs[bv]:.2f}, afm: {fms[bv]:.2f}')
-            wandb.log({f'{tor[i]}-bt': bv * 0.05, f'{tor[i]}-avgp': avgps[bv], f'{tor[i]}-rec': rcs[bv],
-                       f'{tor[i]}-afm': fms[bv]})
+            wandb.log({f'each/{tor[i]}-bt': bv * 0.05, f'each/{tor[i]}-avgp': avgps[bv], f'each/{tor[i]}-rec': rcs[bv],
+                       f'each/{tor[i]}-afm': fms[bv]})
             gavgps += avgps[bv]
             grcs += rcs[bv]
             gfms += fms[bv]
@@ -128,4 +128,4 @@ def eval_test(accelerator, model, cqloader, graph_loader, cq, root_entities, res
         grcs /= len(tor)
         gfms /= len(tor)
 
-        wandb.log({'gavgp': gavgps, 'grec': grcs, 'gafm': gfms})
+        wandb.log({'global/gavgp': gavgps, 'global/grec': grcs, 'global/gafm': gfms})

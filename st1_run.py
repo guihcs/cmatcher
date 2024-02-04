@@ -1,3 +1,5 @@
+import sys
+
 from owl_utils import *
 from cqa_search import *
 from eval_utils import *
@@ -24,6 +26,7 @@ def parse_arguments():
 
     return arg_parser.parse_args()
 
+
 os.environ["TOKENIZERS_PARALLELISM"] = 'false'
 
 torch.manual_seed(0)
@@ -31,23 +34,48 @@ random.seed(0)
 
 args = parse_arguments()
 
+test_onts = ['cmt', 'conference', 'confOf', 'edas', 'ekaw']
+language_models = ['BAAI/bge-base-en', 'infgrad/stella-base-en-v2', 'BAAI/bge-large-en-v1.5', 'llmrails/ember-v1',
+                   'thenlper/gte-large']
+architectures = ['lm', 'gnn', 'sgnn']
+pred = ['none', 'pred']
+dephs = [1, 2, 3, 4]
+
+
+def all_combinations():
+    combs = []
+    for to in test_onts:
+        for lm in language_models:
+            for a in architectures:
+                if a == 'lm':
+                    combs.append((to, lm, a, 'none', 0))
+                for p in pred:
+                    for d in dephs:
+                        combs.append((to, lm, a, p, d))
+
+    return combs
+
+
+test_ont, language_model, architecture, cpred, depth = all_combinations()[args.sweep]
 
 config = {
-    'test_ont': 'cmt',
+    'test_ont': test_ont,
     'learning_rate': 0.00001,
-    'language_model': 'bert-base-uncased',
-    'architecture': 'gnn',
+    'language_model': language_model,
+    'architecture': architecture,
+    'pred': cpred,
     'epochs': 5,
     'batch_size': 2,
     'evm_th': 0.9,
     'ev_sim_threshold': 0.8,
     'sim_margin': 0.8,
-    'depth': 1
+    'depth': depth
 }
 
 wandb.init(
     project='cmatcher',
     config=config,
+    group=f'{language_model}-{architecture}-{cpred}',
     settings=wandb.Settings(_disable_stats=True, _disable_meta=True)
 )
 
@@ -91,7 +119,7 @@ else:
 conts_cqa_subg = copy.deepcopy(train_ont_cqa_subg)
 del conts_cqa_subg[test_ont]
 
-tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
+tokenizer = AutoTokenizer.from_pretrained(config['language_model'])
 
 root_entities, graph_data, cq, cqid, caq, cqmask, tor = prepare_eval_dataset(test_ont, cqas, ifd, tokenizer, mc, mp,
                                                                              fres)
@@ -160,7 +188,7 @@ def train_function(config, model, root_entities, graph_data, cq, cqid, res, caq,
         evh.append(evm(accelerator, model, dataset, th=config["ev_sim_threshold"]))
         eval_test(accelerator, model, cqloader, graph_loader, cq, root_entities, res, acqloader, cqmask, tor)
         accelerator.print(f'epoch {e} loss: {lh[-1]:.2f}, ev: {evh[-1]:.2f}')
-        wandb.log({'acc': evh[-1], 'loss': lh[-1]})
+        wandb.log({'global/acc': evh[-1], 'global/loss': lh[-1]})
 
     if accelerator.is_main_process:
         progress.close()
