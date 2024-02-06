@@ -110,13 +110,20 @@ class GNN(nn.Module):
 
 
 class BertEmb(nn.Module):
-    def __init__(self, model):
+    def __init__(self, model, lm_grad=True):
         super(BertEmb, self).__init__()
         self.bert = AutoModel.from_pretrained(model)
         self.max_seq_len = 512
         self.bert.pooler.requires_grad_(False)
 
+        if not lm_grad:
+            self.bert.eval()
+            for p in self.bert.parameters():
+                p.requires_grad = False
+
     def forward(self, x):
+        return self.embed(x)
+    def embed(self, x):
         mask = x > 0
 
         if x.size(1) > self.max_seq_len:
@@ -134,12 +141,12 @@ class BertEmb(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, model, d=1, arch='sgnn', use_pred=True):
+    def __init__(self, model, d=1, arch='sgnn', use_pred=True, lm_grad=True):
         super(Model, self).__init__()
         self.arch = arch
         self.use_pred = use_pred
 
-        self.emb1 = BertEmb(model)
+        self.emb1 = BertEmb(model, lm_grad=lm_grad)
         self.gnn = GNN(768, 8, d=d, arch=arch, use_pred=use_pred)
 
     def forward(self, cqa=None, positive_sbg=None, negative_sbg=None):

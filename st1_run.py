@@ -1,5 +1,3 @@
-import sys
-
 from owl_utils import *
 from cqa_search import *
 from eval_utils import *
@@ -7,7 +5,6 @@ from transformers import AutoTokenizer
 import dill
 import os
 import torch.optim as optim
-import matplotlib.pyplot as plt
 import copy
 
 from model import *
@@ -38,6 +35,7 @@ test_onts = ['cmt', 'conference', 'confOf', 'edas', 'ekaw']
 language_models = ['BAAI/bge-base-en', 'infgrad/stella-base-en-v2', 'BAAI/bge-large-en-v1.5', 'llmrails/ember-v1',
                    'thenlper/gte-large']
 architectures = ['lm', 'gnn', 'sgnn']
+lm_grad = ['none', 'grad']
 pred = ['none', 'pred']
 dephs = [1, 2, 3, 4]
 
@@ -48,15 +46,16 @@ def all_combinations():
         for lm in language_models:
             for a in architectures:
                 if a == 'lm':
-                    combs.append((to, lm, a, 'none', 0))
-                for p in pred:
-                    for d in dephs:
-                        combs.append((to, lm, a, p, d))
+                    combs.append((to, lm, a, 'grad', 'none', 0))
+                    continue
+                for g in lm_grad:
+                    for p in pred:
+                        for d in dephs:
+                            combs.append((to, lm, a, g, p, d))
 
     return combs
 
-
-test_ont, language_model, architecture, cpred, depth = all_combinations()[args.sweep]
+test_ont, language_model, architecture, grad, cpred, depth = all_combinations()[args.sweep]
 
 config = {
     'test_ont': test_ont,
@@ -69,15 +68,11 @@ config = {
     'evm_th': 0.9,
     'ev_sim_threshold': 0.8,
     'sim_margin': 0.8,
-    'depth': depth
+    'depth': depth,
+    'grad': grad
 }
 
-wandb.init(
-    project='cmatcher',
-    config=config,
-    group=f'{language_model}-{architecture}-{cpred}',
-    settings=wandb.Settings(_disable_stats=True, _disable_meta=True)
-)
+
 
 ontology_paths = {
     'edas.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/edas.owl',
@@ -195,6 +190,13 @@ def train_function(config, model, root_entities, graph_data, cq, cqid, res, caq,
 
 
 if __name__ == "__main__":
-    model = Model(config['language_model'], d=config['depth'])
+    wandb.init(
+        project='cmatcher',
+        config=config,
+        group=f'{language_model}-{architecture}-{cpred}-{grad}',
+        settings=wandb.Settings(_disable_stats=True, _disable_meta=True)
+    )
+
+    model = Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad')
     train_function(config, model, root_entities, graph_data, cq, cqid, fres, caq, cqmask, tor)
     wandb.finish()
