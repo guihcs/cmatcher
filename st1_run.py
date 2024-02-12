@@ -24,102 +24,6 @@ def parse_arguments():
     return arg_parser.parse_args()
 
 
-os.environ["TOKENIZERS_PARALLELISM"] = 'false'
-
-torch.manual_seed(0)
-random.seed(0)
-
-args = parse_arguments()
-
-test_onts = ['cmt', 'conference', 'confOf', 'edas', 'ekaw']
-language_models = ['BAAI/bge-base-en', 'infgrad/stella-base-en-v2', 'BAAI/bge-large-en-v1.5', 'llmrails/ember-v1',
-                   'thenlper/gte-large']
-architectures = ['lm', 'gnn', 'sgnn']
-lm_grad = ['none', 'grad']
-pred = ['none', 'pred']
-dephs = [1, 2, 3, 4]
-
-
-def all_combinations():
-    combs = []
-    for to in test_onts:
-        for lm in language_models:
-            for a in architectures:
-                if a == 'lm':
-                    combs.append((to, lm, a, 'grad', 'none', 0))
-                    continue
-                for g in lm_grad:
-                    for p in pred:
-                        for d in dephs:
-                            combs.append((to, lm, a, g, p, d))
-
-    return combs
-
-test_ont, language_model, architecture, grad, cpred, depth = all_combinations()[args.sweep]
-
-config = {
-    'test_ont': test_ont,
-    'learning_rate': 0.00001,
-    'language_model': language_model,
-    'architecture': architecture,
-    'pred': cpred,
-    'epochs': 5,
-    'batch_size': 2,
-    'evm_th': 0.9,
-    'ev_sim_threshold': 0.8,
-    'sim_margin': 0.8,
-    'depth': depth,
-    'grad': grad
-}
-
-
-
-ontology_paths = {
-    'edas.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/edas.owl',
-    'ekaw.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/ekaw.owl',
-    'confOf.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/confOf.owl',
-    'conference.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/conference.owl',
-    'cmt.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/cmt.owl',
-}
-
-cqa_path = '/projets/melodi/gsantoss/data/complex/CQAs'
-entities_path = '/projets/melodi/gsantoss/data/complex/entities-cqas'
-
-if os.path.exists('/projets/melodi/gsantoss/tmp/idata.pkl'):
-    with open('/projets/melodi/gsantoss/tmp/idata.pkl', 'rb') as f:
-        train_ont_cqa_subg = dill.load(f)
-        print('loaded from cache.')
-else:
-    with open('/projets/melodi/gsantoss/tmp/idata.pkl', 'wb') as f:
-        dill.dump(load_entities(entities_path, ontology_paths), f)
-
-isg = load_sg(entities_path, ontology_paths)
-
-cqas = load_cqas(cqa_path)
-raw_data = build_raw_data(train_ont_cqa_subg, cqas)
-
-test_ont = config['test_ont']
-
-if os.path.exists(f'/projets/melodi/gsantoss/tmp/{test_ont}.pkl'):
-    with open(f'/projets/melodi/gsantoss/tmp/{test_ont}.pkl', 'rb') as f:
-        ifd, mc, mp, fres = dill.load(f)
-        print('loaded from cache.')
-else:
-    ifd, mc, mp, fres = build_raw_ts(f'/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/{test_ont}.owl',
-                                     isg[test_ont],
-                                     workers=4)
-    with open(f'/projets/melodi/gsantoss/tmp/{test_ont}.pkl', 'wb') as f:
-        dill.dump((ifd, mc, mp, fres), f)
-
-conts_cqa_subg = copy.deepcopy(train_ont_cqa_subg)
-del conts_cqa_subg[test_ont]
-
-tokenizer = AutoTokenizer.from_pretrained(config['language_model'])
-
-root_entities, graph_data, cq, cqid, caq, cqmask, tor = prepare_eval_dataset(test_ont, cqas, ifd, tokenizer, mc, mp,
-                                                                             fres)
-
-
 def train_function(config, model, root_entities, graph_data, cq, cqid, res, caq, cqmask, tor):
     accelerator = Accelerator()
     optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
@@ -190,6 +94,101 @@ def train_function(config, model, root_entities, graph_data, cq, cqid, res, caq,
 
 
 if __name__ == "__main__":
+
+    os.environ["TOKENIZERS_PARALLELISM"] = 'false'
+
+    torch.manual_seed(0)
+    random.seed(0)
+
+    args = parse_arguments()
+
+    test_onts = ['cmt', 'conference', 'confOf', 'edas', 'ekaw']
+    language_models = ['BAAI/bge-base-en', 'infgrad/stella-base-en-v2', 'BAAI/bge-large-en-v1.5', 'llmrails/ember-v1',
+                       'thenlper/gte-large']
+    architectures = ['lm', 'gnn', 'sgnn']
+    lm_grad = ['none', 'grad']
+    pred = ['none', 'pred']
+    dephs = [1, 2, 3, 4]
+
+
+    def all_combinations():
+        combs = []
+        for to in test_onts:
+            for lm in language_models:
+                for a in architectures:
+                    if a == 'lm':
+                        combs.append((to, lm, a, 'grad', 'none', 0))
+                        continue
+                    for g in lm_grad:
+                        for p in pred:
+                            for d in dephs:
+                                combs.append((to, lm, a, g, p, d))
+
+        return combs
+
+
+    test_ont, language_model, architecture, grad, cpred, depth = all_combinations()[args.sweep]
+
+    config = {
+        'test_ont': test_ont,
+        'learning_rate': 0.00001,
+        'language_model': language_model,
+        'architecture': architecture,
+        'pred': cpred,
+        'epochs': 5,
+        'batch_size': 2,
+        'evm_th': 0.9,
+        'ev_sim_threshold': 0.8,
+        'sim_margin': 0.8,
+        'depth': depth,
+        'grad': grad
+    }
+
+    ontology_paths = {
+        'edas.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/edas.owl',
+        'ekaw.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/ekaw.owl',
+        'confOf.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/confOf.owl',
+        'conference.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/conference.owl',
+        'cmt.owl': '/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/cmt.owl',
+    }
+
+    cqa_path = '/projets/melodi/gsantoss/data/complex/CQAs'
+    entities_path = '/projets/melodi/gsantoss/data/complex/entities-cqas'
+
+    if os.path.exists('/projets/melodi/gsantoss/tmp/idata.pkl'):
+        with open('/projets/melodi/gsantoss/tmp/idata.pkl', 'rb') as f:
+            train_ont_cqa_subg = dill.load(f)
+            print('loaded from cache.')
+    else:
+        with open('/projets/melodi/gsantoss/tmp/idata.pkl', 'wb') as f:
+            dill.dump(load_entities(entities_path, ontology_paths), f)
+
+    isg = load_sg(entities_path, ontology_paths)
+
+    cqas = load_cqas(cqa_path)
+    raw_data = build_raw_data(train_ont_cqa_subg, cqas)
+
+    test_ont = config['test_ont']
+
+    if os.path.exists(f'/projets/melodi/gsantoss/tmp/{test_ont}.pkl'):
+        with open(f'/projets/melodi/gsantoss/tmp/{test_ont}.pkl', 'rb') as f:
+            ifd, mc, mp, fres = dill.load(f)
+            print('loaded from cache.')
+    else:
+        ifd, mc, mp, fres = build_raw_ts(f'/projets/melodi/gsantoss/data/oaei/tracks/conference/onts/{test_ont}.owl',
+                                         isg[test_ont],
+                                         workers=4)
+        with open(f'/projets/melodi/gsantoss/tmp/{test_ont}.pkl', 'wb') as f:
+            dill.dump((ifd, mc, mp, fres), f)
+
+    conts_cqa_subg = copy.deepcopy(train_ont_cqa_subg)
+    del conts_cqa_subg[test_ont]
+
+    tokenizer = AutoTokenizer.from_pretrained(config['language_model'])
+
+    root_entities, graph_data, cq, cqid, caq, cqmask, tor = prepare_eval_dataset(test_ont, cqas, ifd, tokenizer, mc, mp,
+                                                                                 fres)
+
     wandb.init(
         project='cmatcher',
         config=config,
