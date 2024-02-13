@@ -52,9 +52,9 @@ def train_function(config, model, root_entities, graph_data, cq, cqid, res, caq,
         progress = tqdm(total=epochs * len(loader))
 
     accelerator.print('First evaluation:')
+    evh.append(evm(accelerator, model, dataset, th=config["ev_sim_threshold"]))
     eval_test(accelerator, model, cqloader, graph_loader, cq, root_entities, res, acqloader, cqmask, tor)
-
-    accelerator.print(f'ev data: {evm(accelerator, model, dataset, th=config["ev_sim_threshold"]):.2f}')
+    wandb.log({'global/acc': evh[-1], 'global/loss': lh[-1]})
 
     for e in range(epochs):
 
@@ -93,6 +93,7 @@ def train_function(config, model, root_entities, graph_data, cq, cqid, res, caq,
         progress.close()
 
 
+print(__name__)
 if __name__ == "__main__":
 
     os.environ["TOKENIZERS_PARALLELISM"] = 'false'
