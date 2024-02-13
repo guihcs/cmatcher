@@ -24,8 +24,7 @@ def parse_arguments():
     return arg_parser.parse_args()
 
 
-def train_function(config, model, root_entities, graph_data, cq, cqid, res, caq, cqmask, tor):
-    accelerator = Accelerator()
+def train_function(accelerator, config, model, root_entities, graph_data, cq, cqid, res, caq, cqmask, tor):
     optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
 
     lh = []
@@ -93,8 +92,9 @@ def train_function(config, model, root_entities, graph_data, cq, cqid, res, caq,
         progress.close()
 
 
-print(__name__)
-if __name__ == "__main__":
+accelerator = Accelerator()
+
+if __name__ == "__main__" and accelerator.is_local_main_process:
 
     os.environ["TOKENIZERS_PARALLELISM"] = 'false'
 
@@ -198,5 +198,5 @@ if __name__ == "__main__":
     )
 
     model = Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad')
-    train_function(config, model, root_entities, graph_data, cq, cqid, fres, caq, cqmask, tor)
+    train_function(accelerator, config, model, root_entities, graph_data, cq, cqid, fres, caq, cqmask, tor)
     wandb.finish()
