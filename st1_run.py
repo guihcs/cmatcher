@@ -198,5 +198,6 @@ if __name__ == "__main__" and accelerator.is_local_main_process:
     )
 
     model = Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad')
+    print('start training')
     train_function(accelerator, config, model, root_entities, graph_data, cq, cqid, fres, caq, cqmask, tor)
     wandb.finish()
