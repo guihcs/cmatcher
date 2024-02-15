@@ -36,6 +36,7 @@ def train_function(accelerator, config, model, root_entities, graph_data, cq, cq
     triplet_loss = nn.TripletMarginWithDistanceLoss(
         distance_function=lambda x, y: 1.0 - torch.cosine_similarity(x, y), margin=config['sim_margin'])
 
+    print('build datasets')
     dataset = CQADataset(tokenizer, conts_cqa_subg, raw_data[test_ont], filter_bn=False)
     loader = DataLoader(dataset, batch_size=batch_size)
 
@@ -43,6 +44,7 @@ def train_function(accelerator, config, model, root_entities, graph_data, cq, cq
     acqloader = [DataLoader(a, batch_size=batch_size, shuffle=False) for a in caq]
     graph_loader = DataLoader(graph_data, batch_size=batch_size, shuffle=False)
 
+    print('prepare data')
     model, optimizer, loader, cqloader, graph_loader, *acqloader = accelerator.prepare(model, optimizer, loader,
                                                                                        cqloader, graph_loader,
                                                                                        *acqloader)
@@ -50,6 +52,7 @@ def train_function(accelerator, config, model, root_entities, graph_data, cq, cq
     if not progress and accelerator.is_main_process:
         progress = tqdm(total=epochs * len(loader))
 
+    print('start training')
     accelerator.print('First evaluation:')
     evh.append(evm(accelerator, model, dataset, th=config["ev_sim_threshold"]))
     eval_test(accelerator, model, cqloader, graph_loader, cq, root_entities, res, acqloader, cqmask, tor)
