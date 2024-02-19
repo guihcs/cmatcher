@@ -48,6 +48,8 @@ def train_function(accelerator, config, model, root_entities, graph_data, cq, cq
     model, optimizer, loader, cqloader, graph_loader, *acqloader = accelerator.prepare(model, optimizer, loader,
                                                                                        cqloader, graph_loader,
                                                                                        *acqloader)
+
+    print('data prepared')
     model.find_unused_parameters = False
     if not progress and accelerator.is_main_process:
         progress = tqdm(total=epochs * len(loader))
