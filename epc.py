@@ -2,7 +2,7 @@
 
 import ply.yacc as yacc
 
-from cmatcher.elex import tokens
+from elex import tokens
 # from elex import tokens
 
 

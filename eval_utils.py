@@ -38,7 +38,9 @@ def evm(model, dataset, th=0.5):
                                                               batch.edge_index_s, batch.edge_feat_sf,
                                                               batch.edge_feat_s))
 
-            isbgs = sbgs[batch.rsi]
+            print(sbgs.shape, batch.rsi.shape, sbgs.device, batch.rsi.device)
+
+            isbgs = sbgs[batch.rsi.cuda(0)]
 
             sim = torch.cosine_similarity(cqs, isbgs) > th
             res.append(sim)
