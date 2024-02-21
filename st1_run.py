@@ -186,8 +186,8 @@ for e in range(epochs):
                                 negative_sbg=(batch.x_nf, batch.x_n,
                                               batch.edge_index_n, batch.edge_feat_nf, batch.edge_feat_n))
 
-        isbgs = sbgs[batch.rsi]
-        isbgn = nsbg[batch.rni]
+        isbgs = sbgs[batch.rsi.cuda(0)]
+        isbgn = nsbg[batch.rni.cuda(0)]
 
         loss = triplet_loss(cqs, isbgs, isbgn)
         el.append(loss.detach())
