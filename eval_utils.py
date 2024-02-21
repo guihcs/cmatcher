@@ -1,35 +1,34 @@
-
 import torch
 from torch_geometric.loader import DataLoader
 import wandb
 
-def embed_cqas(accelerator, model, cqloader):
 
+def embed_cqas(model, cqloader):
     cqeb = []
 
     for c in cqloader:
         with torch.no_grad():
-
             out, _, _ = model(cqa=c)
-            cqeb.append(accelerator.gather_for_metrics(out))
+            cqeb.append(out)
 
     cqeb = torch.cat(cqeb, dim=0)
     return cqeb
 
-def embed_subg(accelerator, model, graph_loader):
+
+def embed_subg(model, graph_loader):
     fe = []
     for batch in graph_loader:
         with torch.no_grad():
             _, out, _ = model(positive_sbg=(batch.x_sf, batch.x_s, batch.edge_index_s,
                                             batch.edge_feat_sf, batch.edge_feat_s))
-            fe.append(accelerator.gather_for_metrics(out[batch.rsi]))
+            fe.append(out[batch.rsi])
 
     fe = torch.cat(fe, dim=0)
 
     return fe
 
 
-def evm(accelerator, model, dataset, th=0.5):
+def evm(model, dataset, th=0.5):
     model.eval()
 
     res = []
@@ -42,7 +41,7 @@ def evm(accelerator, model, dataset, th=0.5):
             isbgs = sbgs[batch.rsi]
 
             sim = torch.cosine_similarity(cqs, isbgs) > th
-            res.append(accelerator.gather_for_metrics(sim))
+            res.append(sim)
 
     res = torch.cat(res, dim=0)
 
@@ -74,58 +73,53 @@ def get_apr(metrics):
     return avgp, rc, fm
 
 
-def eval_test(accelerator, model, cqloader, graph_loader, cq, root_entities, res, caq, cqmask, tor):
+def eval_test(model, cqloader, graph_loader, cq, root_entities, res, caq, cqmask, tor):
     model.eval()
 
-    cqeb = embed_cqas(accelerator, model, cqloader)
-    aembs = [embed_cqas(accelerator, model, a) for a in caq]
+    cqeb = embed_cqas(model, cqloader)
+    aembs = [embed_cqas(model, a) for a in caq]
 
-    graph_embeddings = embed_subg(accelerator, model, graph_loader)
+    graph_embeddings = embed_subg(model, graph_loader)
 
-    if accelerator.is_main_process:
+    avgps = []
+    rcs = []
+    fms = []
 
+    for t in torch.arange(0, 1, 0.05):
+        avgp, rc, fm = get_apr(eval_metrics(cq, cqeb, graph_embeddings, root_entities, res, th=t))
+        avgps.append(avgp)
+        rcs.append(rc)
+        fms.append(fm)
+
+    bv = torch.tensor(fms).argmax().item()
+
+    wandb.log({'global/bt': bv * 0.05, 'global/avgp': avgps[bv], 'global/rec': rcs[bv], 'global/afm': fms[bv]})
+
+    gavgps = 0
+    grcs = 0
+    gfms = 0
+
+    for i in range(len(tor)):
         avgps = []
         rcs = []
         fms = []
-
         for t in torch.arange(0, 1, 0.05):
-            avgp, rc, fm = get_apr(eval_metrics(cq, cqeb, graph_embeddings, root_entities, res, th=t))
+            metrics = eval_metrics(cq, aembs[i], graph_embeddings, root_entities, res, th=t,
+                                   cqm=[x[i] for x in cqmask])
+            avgp, rc, fm = get_apr(metrics)
             avgps.append(avgp)
             rcs.append(rc)
             fms.append(fm)
 
         bv = torch.tensor(fms).argmax().item()
+        wandb.log({f'each/{tor[i]}-bt': bv * 0.05, f'each/{tor[i]}-avgp': avgps[bv], f'each/{tor[i]}-rec': rcs[bv],
+                   f'each/{tor[i]}-afm': fms[bv]})
+        gavgps += avgps[bv]
+        grcs += rcs[bv]
+        gfms += fms[bv]
 
-        accelerator.print(f'bt: {bv * 0.05:.2f} avgp: {avgps[bv]:.2f}, rec: {rcs[bv]:.2f}, afm: {fms[bv]:.2f}')
-        wandb.log({'global/bt': bv * 0.05, 'global/avgp': avgps[bv], 'global/rec': rcs[bv], 'global/afm': fms[bv]})
+    gavgps /= len(tor)
+    grcs /= len(tor)
+    gfms /= len(tor)
 
-        gavgps = 0
-        grcs = 0
-        gfms = 0
-
-        for i in range(len(tor)):
-            avgps = []
-            rcs = []
-            fms = []
-            for t in torch.arange(0, 1, 0.05):
-                metrics = eval_metrics(cq, aembs[i], graph_embeddings, root_entities, res, th=t,
-                                       cqm=[x[i] for x in cqmask])
-                avgp, rc, fm = get_apr(metrics)
-                avgps.append(avgp)
-                rcs.append(rc)
-                fms.append(fm)
-
-            bv = torch.tensor(fms).argmax().item()
-            accelerator.print(
-                f'{tor[i]} bt: {bv * 0.05:.2f} avgp: {avgps[bv]:.2f}, rec: {rcs[bv]:.2f}, afm: {fms[bv]:.2f}')
-            wandb.log({f'each/{tor[i]}-bt': bv * 0.05, f'each/{tor[i]}-avgp': avgps[bv], f'each/{tor[i]}-rec': rcs[bv],
-                       f'each/{tor[i]}-afm': fms[bv]})
-            gavgps += avgps[bv]
-            grcs += rcs[bv]
-            gfms += fms[bv]
-
-        gavgps /= len(tor)
-        grcs /= len(tor)
-        gfms /= len(tor)
-
-        wandb.log({'global/gavgp': gavgps, 'global/grec': grcs, 'global/gafm': gfms})
+    wandb.log({'global/gavgp': gavgps, 'global/grec': grcs, 'global/gafm': gfms})
