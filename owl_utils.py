@@ -6,8 +6,8 @@ import os
 from tqdm.auto import tqdm
 from os import path
 
-from cqa_search import pad_entities, GraphData
-from epc import parser
+from cmatcher.cqa_search import pad_entities, GraphData
+from cmatcher.epc import parser
 from multiprocessing_on_dill import Pool
 import torch
 
