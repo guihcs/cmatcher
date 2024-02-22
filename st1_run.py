@@ -142,10 +142,10 @@ wandb.init(
 print('start training')
 
 # %%
-# model = nn.DataParallel(Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad'))
-# model.cuda(0)
+model = nn.DataParallel(Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad'))
+model.cuda(0)
 
-model = Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad')
+# model = Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad')
 
 # %%
 optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
@@ -170,7 +170,7 @@ graph_loader = DataLoader(graph_data, batch_size=batch_size, shuffle=False)
 
 
 print('data prepared')
-# model.find_unused_parameters = False
+model.find_unused_parameters = False
 if not progress:
     progress = tqdm(total=epochs * len(loader))
 
