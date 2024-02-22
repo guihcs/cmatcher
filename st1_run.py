@@ -1,10 +1,15 @@
-# %%
+import os
+
+
+os.environ["TOKENIZERS_PARALLELISM"] = 'false'
+os.environ["WANDB_DIR"] = '/projets/melodi/gsantoss/wandbt'
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
 from owl_utils import *
 from cqa_search import *
 from eval_utils import *
 from transformers import AutoTokenizer
 import dill
-import os
 import torch
 import torch.optim as optim
 import copy
@@ -17,7 +22,7 @@ import wandb
 
 import argparse
 
-os.environ["TOKENIZERS_PARALLELISM"] = 'false'
+
 
 torch.manual_seed(0)
 random.seed(0)
