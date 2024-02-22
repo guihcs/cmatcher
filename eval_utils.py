@@ -32,6 +32,7 @@ def evm(model, dataset, th=0.5):
     model.eval()
 
     res = []
+    print('begin evm')
     for batch in DataLoader(dataset, batch_size=2):
         with torch.no_grad():
             cqs, sbgs, _ = model(cqa=batch.cqs, positive_sbg=(batch.x_sf, batch.x_s,
@@ -44,7 +45,7 @@ def evm(model, dataset, th=0.5):
             res.append(sim)
 
     res = torch.cat(res, dim=0)
-
+    print('end evm')
     return (res.sum() / res.size(0)).item()
 
 

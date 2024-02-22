@@ -170,7 +170,7 @@ graph_loader = DataLoader(graph_data, batch_size=batch_size, shuffle=False)
 
 
 print('data prepared')
-model.find_unused_parameters = False
+# model.find_unused_parameters = False
 if not progress:
     progress = tqdm(total=epochs * len(loader))
 
