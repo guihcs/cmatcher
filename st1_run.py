@@ -3,7 +3,6 @@ import os
 
 os.environ["TOKENIZERS_PARALLELISM"] = 'false'
 os.environ["WANDB_DIR"] = '/projets/melodi/gsantoss/wandbt'
-os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from owl_utils import *
 from cqa_search import *
@@ -143,8 +142,11 @@ wandb.init(
 print('start training')
 
 # %%
-model = nn.DataParallel(Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad'))
-model.cuda(0)
+# model = nn.DataParallel(Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad'))
+# model.cuda(0)
+
+model = Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad')
+
 # %%
 optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
 
@@ -191,8 +193,8 @@ for e in range(epochs):
                                 negative_sbg=(batch.x_nf, batch.x_n,
                                               batch.edge_index_n, batch.edge_feat_nf, batch.edge_feat_n))
 
-        isbgs = sbgs[batch.rsi.cuda(0)]
-        isbgn = nsbg[batch.rni.cuda(0)]
+        isbgs = sbgs[batch.rsi]
+        isbgn = nsbg[batch.rni]
 
         loss = triplet_loss(cqs, isbgs, isbgn)
         el.append(loss.detach())
