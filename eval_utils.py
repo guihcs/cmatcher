@@ -8,7 +8,7 @@ def embed_cqas(model, cqloader):
 
     for c in cqloader:
         with torch.no_grad():
-            out, _, _ = model(cqa=c)
+            out, _, _ = model(cqa=c.cuda(0))
             cqeb.append(out)
 
     cqeb = torch.cat(cqeb, dim=0)
@@ -19,8 +19,8 @@ def embed_subg(model, graph_loader):
     fe = []
     for batch in graph_loader:
         with torch.no_grad():
-            _, out, _ = model(positive_sbg=(batch.x_sf, batch.x_s, batch.edge_index_s,
-                                            batch.edge_feat_sf, batch.edge_feat_s))
+            _, out, _ = model(positive_sbg=(batch.x_sf.cuda(0), batch.x_s.cuda(0), batch.edge_index_s.cuda(0),
+                                            batch.edge_feat_sf.cuda(0), batch.edge_feat_s.cuda(0)))
             fe.append(out[batch.rsi])
 
     fe = torch.cat(fe, dim=0)
@@ -35,9 +35,9 @@ def evm(model, dataset, th=0.5):
     print('begin evm')
     for batch in DataLoader(dataset, batch_size=2):
         with torch.no_grad():
-            cqs, sbgs, _ = model(cqa=batch.cqs, positive_sbg=(batch.x_sf, batch.x_s,
-                                                              batch.edge_index_s, batch.edge_feat_sf,
-                                                              batch.edge_feat_s))
+            cqs, sbgs, _ = model(cqa=batch.cqs.cuda(0), positive_sbg=(batch.x_sf.cuda(0), batch.x_s.cuda(0),
+                                                              batch.edge_index_s.cuda(0), batch.edge_feat_sf.cuda(0),
+                                                              batch.edge_feat_s.cuda(0)))
 
             isbgs = sbgs[batch.rsi]
 

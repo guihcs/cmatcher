@@ -1,5 +1,5 @@
+# %%
 import os
-
 
 os.environ["TOKENIZERS_PARALLELISM"] = 'false'
 os.environ["WANDB_DIR"] = '/projets/melodi/gsantoss/wandbt'
@@ -15,16 +15,16 @@ import copy
 import tqdm
 from model import *
 from tqdm.auto import tqdm
-from accelerate import Accelerator
 import random
 import wandb
 
 import argparse
 
-
-
 torch.manual_seed(0)
 random.seed(0)
+
+
+# %%
 
 
 # %%
@@ -41,7 +41,7 @@ def parse_arguments():
 # %%
 
 
-args = parse_arguments()
+# args = parse_arguments()
 
 test_onts = ['cmt', 'conference', 'confOf', 'edas', 'ekaw']
 language_models = ['BAAI/bge-base-en', 'infgrad/stella-base-en-v2', 'BAAI/bge-large-en-v1.5', 'llmrails/ember-v1',
@@ -138,12 +138,40 @@ wandb.init(
     settings=wandb.Settings(_disable_stats=True, _disable_meta=True)
 )
 
+print(config)
 
+# %%
 print('start training')
 
 # %%
-model = nn.DataParallel(Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad'))
+model = Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad')
 model.cuda(0)
+
+
+# %%
+
+
+def evm(model, dataset, th=0.5):
+    model.eval()
+
+    res = []
+    print('begin evm')
+    for batch in DataLoader(dataset, batch_size=2):
+        with torch.no_grad():
+            cqs, sbgs, _ = model(cqa=batch.cqs.cuda(0), positive_sbg=(batch.x_sf.cuda(0), batch.x_s.cuda(0),
+                                                                      batch.edge_index_s.cuda(0),
+                                                                      batch.edge_feat_sf.cuda(0),
+                                                                      batch.edge_feat_s.cuda(0)))
+
+            isbgs = sbgs[batch.rsi]
+
+            sim = torch.cosine_similarity(cqs, isbgs) > th
+            res.append(sim)
+
+    res = torch.cat(res, dim=0)
+    print('end evm')
+    return (res.sum() / res.size(0)).item()
+
 
 # model = Model(config['language_model'], d=config['depth'], lm_grad=config['grad'] == 'grad')
 
@@ -177,7 +205,7 @@ if not progress:
 print('start training')
 evh.append(evm(model, dataset, th=config["ev_sim_threshold"]))
 eval_test(model, cqloader, graph_loader, cq, root_entities, fres, acqloader, cqmask, tor)
-wandb.log({'global/acc': evh[-1], 'global/loss': lh[-1]})
+wandb.log({'global/acc': evh[-1]})
 
 for e in range(epochs):
 
@@ -187,11 +215,13 @@ for e in range(epochs):
     for batch in loader:
         optimizer.zero_grad()
 
-        cqs, sbgs, nsbg = model(cqa=batch.cqs, positive_sbg=(batch.x_sf, batch.x_s,
-                                                             batch.edge_index_s, batch.edge_feat_sf,
-                                                             batch.edge_feat_s),
-                                negative_sbg=(batch.x_nf, batch.x_n,
-                                              batch.edge_index_n, batch.edge_feat_nf, batch.edge_feat_n))
+        cqs, sbgs, nsbg = model(cqa=batch.cqs.cuda(0), positive_sbg=(batch.x_sf.cuda(0), batch.x_s.cuda(0),
+                                                                     batch.edge_index_s.cuda(0),
+                                                                     batch.edge_feat_sf.cuda(0),
+                                                                     batch.edge_feat_s.cuda(0)),
+                                negative_sbg=(batch.x_nf.cuda(0), batch.x_n.cuda(0),
+                                              batch.edge_index_n.cuda(0), batch.edge_feat_nf.cuda(0),
+                                              batch.edge_feat_n.cuda(0)))
 
         isbgs = sbgs[batch.rsi]
         isbgn = nsbg[batch.rni]
@@ -212,3 +242,5 @@ for e in range(epochs):
 progress.close()
 
 wandb.finish()
+
+# %%

@@ -130,7 +130,7 @@ class BertEmb(nn.Module):
             x = x[:, :self.max_seq_len]
             mask = mask[:, :self.max_seq_len]
 
-        out = self.bert(input_ids=x, attention_mask=mask)['last_hidden_state']
+        out = self.bert(input_ids=x, attention_mask=mask.to(x.device))['last_hidden_state']
 
         om = mask.unsqueeze(-1).float()
 
