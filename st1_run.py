@@ -41,7 +41,7 @@ def parse_arguments():
 # %%
 
 
-# args = parse_arguments()
+args = parse_arguments()
 
 test_onts = ['cmt', 'conference', 'confOf', 'edas', 'ekaw']
 language_models = ['BAAI/bge-base-en', 'infgrad/stella-base-en-v2', 'BAAI/bge-large-en-v1.5', 'llmrails/ember-v1',
