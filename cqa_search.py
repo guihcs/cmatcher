@@ -78,6 +78,8 @@ def pad_entities(tokenizer, entities, ml, flat_bn=True):
         ft = list(map(lambda x: x if type(x) is not BNode else 'blank node', entities))
     else:
         ft = entities
+
+    ft = list(map(str, ft))
     sm = {}
     n = []
     for i, f in enumerate(ft):
