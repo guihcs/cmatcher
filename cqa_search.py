@@ -73,8 +73,11 @@ def pad_edge(t, max_len):
     return t + (max_len - len(t)) * [[-1, -1]]
 
 
-def pad_entities(tokenizer, entities, ml):
-    ft = list(map(lambda x: x if type(x) is not BNode else 'blank node', entities))
+def pad_entities(tokenizer, entities, ml, flat_bn=True):
+    if flat_bn:
+        ft = list(map(lambda x: x if type(x) is not BNode else 'blank node', entities))
+    else:
+        ft = entities
     sm = {}
     n = []
     for i, f in enumerate(ft):
@@ -90,7 +93,7 @@ def pad_entities(tokenizer, entities, ml):
 class PadData:
 
     def __init__(self, cqa_name, anchor_cqa, anchor_entities, anchor_entities_index,
-                  anchor_properties, anchor_properties_index, edge1):
+                 anchor_properties, anchor_properties_index, edge1):
         self.cqa_name = cqa_name
         self.anchor_cqa = anchor_cqa
         self.anchor_entities = anchor_entities
@@ -100,15 +103,17 @@ class PadData:
         self.edge1 = edge1
 
 
-def pad_dataset(tokenizer, raw_data, stats) -> list[PadData]:
+def pad_dataset(tokenizer, raw_data, stats, flat_bn=True) -> list[PadData]:
     pd = []
     for cqa_name, anchor_cqa, positive_cqa, anchor_graph, positive_graph in raw_data:
         ids1 = tokenizer(anchor_cqa, return_tensors='pt')['input_ids']
         anchor_cqa = pad_seq(ids1, stats['max_len_cqa'], pad_token=tokenizer.pad_token_id)
 
-        anchor_entities, anchor_entities_index = pad_entities(tokenizer, anchor_graph[0], stats['max_feature_len'])
+        anchor_entities, anchor_entities_index = pad_entities(tokenizer, anchor_graph[0], stats['max_feature_len'],
+                                                              flat_bn=flat_bn)
 
-        anchor_properties, anchor_properties_index = pad_entities(tokenizer, anchor_graph[1], stats['max_property_len'])
+        anchor_properties, anchor_properties_index = pad_entities(tokenizer, anchor_graph[1], stats['max_property_len'],
+                                                                  flat_bn=flat_bn)
 
         edge1 = torch.LongTensor(anchor_graph[2])
 
@@ -155,17 +160,18 @@ class GraphData(Data):
 
         return super().__inc__(key, value, *args, **kwargs)
 
+
 class CQADataset(Dataset):
-    def __init__(self, tokenizer, idata, raw_data, transform=None, pre_transform=None, filter_bn=False):
+    def __init__(self, tokenizer, idata, raw_data, transform=None, pre_transform=None, filter_bn=False, flat_bn=True):
         super().__init__(None, transform, pre_transform)
+        self.flat_bn = flat_bn
         self.stats = get_dataset_stats(raw_data)
-        self.pd = pad_dataset(tokenizer, raw_data, self.stats)
+        self.pd = pad_dataset(tokenizer, raw_data, self.stats, flat_bn=flat_bn)
         self.idata = idata
         self.tokenizer = tokenizer
 
         if filter_bn:
             self.pd = list(filter(lambda x: 'blank node' not in tokenizer.decode(x.anchor_entities[0]), self.pd))
-
 
     def len(self):
         return len(self.pd)
@@ -176,9 +182,11 @@ class CQADataset(Dataset):
         rce = random.choice(list(set(self.idata[re].keys()) - {data.anchor_cqa}))
         rcea = self.idata[re][rce]
 
-        negative_entity, negative_entity_index = pad_entities(self.tokenizer, rcea[0], self.stats['max_feature_len'])
+        negative_entity, negative_entity_index = pad_entities(self.tokenizer, rcea[0], self.stats['max_feature_len'],
+                                                              flat_bn=self.flat_bn)
 
-        negative_property, negative_property_index = pad_entities(self.tokenizer, rcea[1], self.stats['max_property_len'])
+        negative_property, negative_property_index = pad_entities(self.tokenizer, rcea[1],
+                                                                  self.stats['max_property_len'], flat_bn=self.flat_bn)
 
         edge1 = torch.LongTensor(rcea[2])
 
@@ -199,15 +207,13 @@ class CQADataset(Dataset):
         )
 
 
-
-
-def prepare_eval_dataset(test_ont, cqas, ifd, tokenizer, mc, mp, fres, filter_bn=True):
+def prepare_eval_dataset(test_ont, cqas, ifd, tokenizer, mc, mp, fres, filter_bn=True, flat_bn=True):
     ts = []
     graph_data = []
     for s, cm, pm, fm in ifd:
-        pd1, pdi1 = pad_entities(tokenizer, cm, mc)
+        pd1, pdi1 = pad_entities(tokenizer, cm, mc, flat_bn=flat_bn)
 
-        pd3, pdi3 = pad_entities(tokenizer, pm, mp)
+        pd3, pdi3 = pad_entities(tokenizer, pm, mp, flat_bn=flat_bn)
 
         edge1 = torch.LongTensor(fm)
 
