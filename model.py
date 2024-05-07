@@ -114,7 +114,9 @@ class BertEmb(nn.Module):
         super(BertEmb, self).__init__()
         self.bert = AutoModel.from_pretrained(model)
         self.max_seq_len = 512
-        self.bert.pooler.requires_grad_(False)
+
+        if hasattr(self.bert, 'pooler'):
+            self.bert.pooler.requires_grad_(False)
 
         if not lm_grad:
             self.bert.eval()

@@ -24,10 +24,6 @@ torch.manual_seed(0)
 random.seed(0)
 
 
-# %%
-
-
-# %%
 
 
 def parse_arguments():

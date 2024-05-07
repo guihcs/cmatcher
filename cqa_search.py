@@ -5,29 +5,45 @@ from torch_geometric.data import Data, Dataset
 from rdflib.term import BNode
 
 
-def build_raw_data(idata, cqas):
+# class DataLine:
+#
+#     def __init__(self, cqa,):
+
+
+def build_raw_data(ontology_subgraphs_map, cqas):
     '''
 
-    :param idata:
+    :param ontology_subgraphs_map:
     :param cqas:
-    :return: (cqa name, anchor cqa, positive cqa, anchor entity, positive entity)
+    :return: (cqa name, positive cqa, positive entity)
     '''
 
     raw_data = {}
 
-    for ts in idata.keys():
-        ks = set(idata.keys())
-        ks.remove(ts)
+    for ontology_name in ontology_subgraphs_map.keys():
+        ontologies_complement = set(ontology_subgraphs_map.keys()) - {ontology_name}
         ds = []
-        for o1, o2 in itertools.permutations(ks, 2):
 
-            for cqa in idata[o1]:
-                if cqa not in idata[o2]:
-                    continue
+        for o1, o2 in itertools.permutations(ontologies_complement, 2):
+            cq1 = set(ontology_subgraphs_map[o1].keys())
+            cq2 = set(ontology_subgraphs_map[o2].keys())
+            ints = cq1.intersection(cq2)
+            ncq1 = cq1 - ints
+            ncq2 = cq2 - ints
 
-                ds.append((cqa, cqas[o1][cqa], cqas[o2][cqa], idata[o1][cqa], idata[o2][cqa]))
+            for c1 in ncq1:
+                ds.append((c1, cqas[o1][c1], ontology_subgraphs_map[o1][c1]))
 
-        raw_data[ts] = ds
+            for c2 in ncq2:
+                ds.append((c2, cqas[o2][c2], ontology_subgraphs_map[o2][c2]))
+
+            for c in ints:
+                ds.append((c, cqas[o1][c], ontology_subgraphs_map[o1][c]))
+                ds.append((c, cqas[o2][c], ontology_subgraphs_map[o2][c]))
+                ds.append((c, cqas[o1][c], ontology_subgraphs_map[o2][c]))
+                ds.append((c, cqas[o2][c], ontology_subgraphs_map[o1][c]))
+
+        raw_data[ontology_name] = ds
 
     return raw_data
 
@@ -39,7 +55,7 @@ def get_dataset_stats(raw_data):
     max_property_count = 0
     max_property_len = 0
     max_edge_count = 0
-    for cqa, c1, c2, e1, e2 in raw_data:
+    for cqa, c1, e1 in raw_data:
         if len(c1) > max_len_cqa:
             max_len_cqa = len(c1)
 
@@ -107,21 +123,22 @@ class PadData:
 
 def pad_dataset(tokenizer, raw_data, stats, flat_bn=True) -> list[PadData]:
     pd = []
-    for cqa_name, anchor_cqa, positive_cqa, anchor_graph, positive_graph in raw_data:
-        ids1 = tokenizer(anchor_cqa, return_tensors='pt')['input_ids']
+    for cqa_name, positive_cqa, positive_graph in raw_data:
+        ids1 = tokenizer(positive_cqa, return_tensors='pt')['input_ids']
         anchor_cqa = pad_seq(ids1, stats['max_len_cqa'], pad_token=tokenizer.pad_token_id)
 
-        anchor_entities, anchor_entities_index = pad_entities(tokenizer, anchor_graph[0], stats['max_feature_len'],
+        anchor_entities, anchor_entities_index = pad_entities(tokenizer, positive_graph[0], stats['max_feature_len'],
                                                               flat_bn=flat_bn)
 
-        anchor_properties, anchor_properties_index = pad_entities(tokenizer, anchor_graph[1], stats['max_property_len'],
+        anchor_properties, anchor_properties_index = pad_entities(tokenizer, positive_graph[1],
+                                                                  stats['max_property_len'],
                                                                   flat_bn=flat_bn)
 
-        edge1 = torch.LongTensor(anchor_graph[2])
+        edge1 = torch.LongTensor(positive_graph[2])
 
         pd.append(
-            PadData(cqa_name, anchor_cqa, anchor_entities, anchor_entities_index,
-                    anchor_properties, anchor_properties_index,
+            PadData(cqa_name, anchor_cqa, anchor_entities, anchor_entities_index, anchor_properties,
+                    anchor_properties_index,
                     edge1))
 
     return pd

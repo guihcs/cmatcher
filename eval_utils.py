@@ -3,24 +3,24 @@ from torch_geometric.loader import DataLoader
 import wandb
 
 
-def embed_cqas(model, cqloader):
+def embed_cqas(model, cqloader, device):
     cqeb = []
 
     for c in cqloader:
         with torch.no_grad():
-            out, _, _ = model(cqa=c.cuda(0))
+            out, _, _ = model(cqa=c.to(device))
             cqeb.append(out)
 
     cqeb = torch.cat(cqeb, dim=0)
     return cqeb
 
 
-def embed_subg(model, graph_loader):
+def embed_subg(model, graph_loader, device):
     fe = []
     for batch in graph_loader:
         with torch.no_grad():
-            _, out, _ = model(positive_sbg=(batch.x_sf.cuda(0), batch.x_s.cuda(0), batch.edge_index_s.cuda(0),
-                                            batch.edge_feat_sf.cuda(0), batch.edge_feat_s.cuda(0)))
+            _, out, _ = model(positive_sbg=(batch.x_sf.to(device), batch.x_s.to(device), batch.edge_index_s.to(device),
+                                            batch.edge_feat_sf.to(device), batch.edge_feat_s.to(device)))
             fe.append(out[batch.rsi])
 
     fe = torch.cat(fe, dim=0)
@@ -28,16 +28,17 @@ def embed_subg(model, graph_loader):
     return fe
 
 
-def evm(model, dataset, th=0.5):
+def evm(model, dataset, device, th=0.5, batch_size=2):
     model.eval()
 
     res = []
     print('begin evm')
-    for batch in DataLoader(dataset, batch_size=2):
+    for batch in DataLoader(dataset, batch_size=batch_size, shuffle=False):
         with torch.no_grad():
-            cqs, sbgs, _ = model(cqa=batch.cqs.cuda(0), positive_sbg=(batch.x_sf.cuda(0), batch.x_s.cuda(0),
-                                                              batch.edge_index_s.cuda(0), batch.edge_feat_sf.cuda(0),
-                                                              batch.edge_feat_s.cuda(0)))
+            cqs, sbgs, _ = model(cqa=batch.cqs.to(device), positive_sbg=(batch.x_sf.to(device), batch.x_s.to(device),
+                                                                      batch.edge_index_s.to(device),
+                                                                      batch.edge_feat_sf.to(device),
+                                                                      batch.edge_feat_s.to(device)))
 
             isbgs = sbgs[batch.rsi]
 
@@ -74,13 +75,13 @@ def get_apr(metrics):
     return avgp, rc, fm
 
 
-def eval_test(model, cqloader, graph_loader, cq, root_entities, res, caq, cqmask, tor):
+def eval_test(model, device, cqloader, graph_loader, cq, root_entities, res, caq, cqmask, tor):
     model.eval()
 
-    cqeb = embed_cqas(model, cqloader)
-    aembs = [embed_cqas(model, a) for a in caq]
+    cqeb = embed_cqas(model, cqloader, device)
+    aembs = [embed_cqas(model, a, device) for a in caq]
 
-    graph_embeddings = embed_subg(model, graph_loader)
+    graph_embeddings = embed_subg(model, graph_loader, device)
 
     avgps = []
     rcs = []
