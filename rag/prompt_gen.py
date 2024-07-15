@@ -1,5 +1,7 @@
 import os
 import itertools
+import sys
+
 from transformers import AutoTokenizer, AutoModel, BitsAndBytesConfig, AutoModelForCausalLM
 import torch
 from rdflib import Graph
@@ -47,6 +49,10 @@ for name, path in paths.items():
 
 params.sort(key=lambda x: '.'.join(x))
 
+if sys.argv[1] == 'count':
+    print(len(params))
+    sys.exit()
+
 print('Loading model and tokenizer...')
 tokenizer = AutoTokenizer.from_pretrained('Salesforce/SFR-Embedding-2_R')
 quantization_config = BitsAndBytesConfig(
@@ -65,7 +71,7 @@ model.eval()
 print('Model and tokenizer loaded successfully!')
 
 prompt = 'Given the following SPARQL query, retrieve relevant entities that are related to the query'
-run_num = 0
+run_num = sys.argv[1]
 
 run = params[run_num]
 
@@ -74,7 +80,7 @@ g2 = Graph().parse(run[2])
 
 with open(run[0], 'r') as f:
     query = f.read()
-    
+
 r1 = ont_query_reduce(model, tokenizer, g1, query, prompt, max_entities=10, batch_size=2)
 r2 = ont_query_reduce(model, tokenizer, g2, query, prompt, max_entities=10, batch_size=2)
 
