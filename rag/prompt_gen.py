@@ -53,6 +53,10 @@ if sys.argv[1] == 'count':
     print(len(params))
     sys.exit()
 
+run_num = int(sys.argv[1])
+
+run = params[run_num]
+
 print('Loading model and tokenizer...')
 tokenizer = AutoTokenizer.from_pretrained('Salesforce/SFR-Embedding-2_R')
 quantization_config = BitsAndBytesConfig(
@@ -71,9 +75,6 @@ model.eval()
 print('Model and tokenizer loaded successfully!')
 
 prompt = 'Given the following SPARQL query, retrieve relevant entities that are related to the query'
-run_num = sys.argv[1]
-
-run = params[run_num]
 
 g1 = Graph().parse(run[1])
 g2 = Graph().parse(run[2])
@@ -81,8 +82,9 @@ g2 = Graph().parse(run[2])
 with open(run[0], 'r') as f:
     query = f.read()
 
-r1 = ont_query_reduce(model, tokenizer, g1, query, prompt, max_entities=10, batch_size=2)
-r2 = ont_query_reduce(model, tokenizer, g2, query, prompt, max_entities=10, batch_size=2)
+r1 = ont_query_reduce(model, tokenizer, run[1], g1, query, prompt, max_entities=10, batch_size=2)
+r2 = ont_query_reduce(model, tokenizer, run[2], g2, query, prompt, max_entities=10, batch_size=2)
+
 
 def gen_prompt(r1, r2, query, include_sample1=False, include_sample2=False):
     sample_prompt = 'Examples of complex alignment between different ontologies:'
@@ -320,13 +322,10 @@ def gen_prompt(r1, r2, query, include_sample1=False, include_sample2=False):
 <ontology2>
 {r2}
 </ontology2>
-
 {sample_prompt}
 {sample1}
 {sample2}
-
-{instruction}
-'''
+{instruction}'''
 
 
 out = '/projets/melodi/gsantoss/complex-llm/generated-prompts'

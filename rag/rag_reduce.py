@@ -5,6 +5,7 @@ from rdflib.namespace import RDF, RDFS, OWL, XSD
 from tqdm.auto import tqdm
 from torch.utils.data import DataLoader, TensorDataset
 from rdflib import Graph
+import os
 
 
 def last_token_pool(last_hidden_states: Tensor,
@@ -22,7 +23,7 @@ def get_detailed_instruct(task_description: str, query: str) -> str:
     return f'Instruct: {task_description}\nQuery: {query}'
 
 
-def rag(model, tokenizer, query, prompt, g, max_entities=15, max_length=4096, batch_size=2):
+def rag(model, tokenizer, gn, query, prompt, g, max_entities=15, max_length=4096, batch_size=2):
     queries = [
         get_detailed_instruct(prompt, query),
     ]
@@ -36,21 +37,39 @@ def rag(model, tokenizer, query, prompt, g, max_entities=15, max_length=4096, ba
 
     batch_dict = tokenizer(input_texts, max_length=max_length, padding=True, truncation=True, return_tensors="pt")
 
+    dataset = TensorDataset(batch_dict['input_ids'], batch_dict['attention_mask'])
+
     res = []
-
-
-    for i, a in tqdm(
-            DataLoader(TensorDataset(batch_dict['input_ids'], batch_dict['attention_mask']), batch_size=batch_size,
-                       shuffle=False)):
+    for i, a in tqdm(DataLoader(dataset[:1], batch_size=batch_size, shuffle=False)):
         with torch.no_grad():
             output = model(input_ids=i, attention_mask=a)
             embeddings = last_token_pool(output.last_hidden_state, a)
             res.append(embeddings)
 
-    res = torch.cat(res, dim=0)
+    qe = torch.cat(res, dim=0)
 
-    qe = res[:1]
-    ee = res[1:]
+    base_cache = 'projects/melodi/gsantoss/rag_cache/'
+
+    os.makedirs(base_cache, exist_ok=True)
+
+    emb_cache = os.path.join(base_cache, '-'.join(gn.split('/')[-3:]).replace('.', '_') + '.pt')
+    ls_path = os.path.join(base_cache, '-'.join(gn.split('/')[-3:]).replace('.', '_') + '_ls.pt')
+    if os.path.exists(emb_cache):
+        print('Loading from cache: ', gn)
+        ee = torch.load(emb_cache)
+        ls = torch.load(ls_path)
+
+    else:
+        res = []
+        for i, a in tqdm(DataLoader(dataset[1:], batch_size=batch_size, shuffle=False)):
+            with torch.no_grad():
+                output = model(input_ids=i, attention_mask=a)
+                embeddings = last_token_pool(output.last_hidden_state, a)
+                res.append(embeddings)
+
+        ee = torch.cat(res, dim=0)
+        torch.save(ee, emb_cache)
+        torch.save(ls, ls_path)
 
     return ls, torch.cosine_similarity(qe.unsqueeze(1), ee.unsqueeze(0), dim=2)
 
@@ -83,8 +102,8 @@ def traverse(e, g: Graph, ng: Graph, depth=0, max_depth=3, reverse=False):
             traverse(s, g, ng, depth=depth + 1, max_depth=max_depth, reverse=reverse)
 
 
-def ont_query_reduce(model, tokenizer, g, query, prompt, top_n=2, i_max_depth=1, o_max_depth=2, max_entities=15,
+def ont_query_reduce(model, tokenizer, gn, g, query, prompt, top_n=2, i_max_depth=1, o_max_depth=2, max_entities=15,
                      max_length=4096, batch_size=2):
-    ls1, scores1 = rag(model, tokenizer, query, prompt, g, max_entities=max_entities, max_length=max_length,
+    ls1, scores1 = rag(model, tokenizer, gn, query, prompt, g, max_entities=max_entities, max_length=max_length,
                        batch_size=batch_size)
     return reduce_ont(ls1, scores1, g, top_n=top_n, i_max_depth=i_max_depth, o_max_depth=o_max_depth)
