@@ -66,7 +66,7 @@ def run(i, lines):
             fl = '/'.join(file_out.split('/')[:-1])
 
             os.makedirs(fl, exist_ok=True)
-            with open(fl, 'w') as fl:
+            with open(file_out, 'w') as fl:
                 fl.write(match(txt, tokenizer, model))
 
             gc.collect()
