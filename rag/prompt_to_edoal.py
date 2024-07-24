@@ -4,6 +4,7 @@ import torch
 from tqdm.auto import tqdm
 import gc
 from multiprocessing_on_dill import Process
+import sys
 
 base_path = '/projets/melodi/gsantoss/complex-llm/generated-prompts'
 base_out = '/projets/melodi/gsantoss/complex-llm/generated-edoal'
@@ -51,7 +52,7 @@ def run(i, lines):
 
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        device_map=i,
+        device_map='auto',
         quantization_config=quantization_config,
         low_cpu_mem_usage=True
 
@@ -76,6 +77,8 @@ def run(i, lines):
 
 if __name__ == '__main__':
 
+    block = int(sys.argv[1])
+
     lines = []
 
     for p, d, fs in os.walk(base_path):
@@ -86,13 +89,10 @@ if __name__ == '__main__':
 
             lines.append(fp)
 
+    lines.sort()
+
     poll = []
 
     slice_size = len(lines) // 4
-    for i in range(0, 4):
-        slines = lines[i * slice_size: (i + 1) * slice_size]
-        poll.append(Process(target=run, args=(i, slines,)))
-
-    for p in poll:
-        p.start()
-        p.join()
+    slines = lines[block * slice_size: (block + 1) * slice_size]
+    run(0, slines)
