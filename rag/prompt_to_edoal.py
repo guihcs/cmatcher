@@ -65,6 +65,7 @@ def run(i, lines):
         if os.path.exists(file_out):
             with open(file_out) as f:
                 if len(f.read()) > 0:
+                    print('skipping ', ci)
                     continue
 
         fl = '/'.join(file_out.split('/')[:-1])
@@ -74,8 +75,12 @@ def run(i, lines):
         with open(l) as f:
             txt = f.read()
 
-        with open(file_out, 'w') as fl:
-            fl.write(match(txt, tokenizer, model))
+        try:
+            with open(file_out, 'w') as fl:
+                fl.write(match(txt, tokenizer, model))
+        except Exception as e:
+            print(f'Error in {ci}: {e}')
+            continue
 
         gc.collect()
         torch.cuda.empty_cache()
@@ -101,6 +106,6 @@ if __name__ == '__main__':
 
     poll = []
 
-    slice_size = len(lines) // 4
-    slines = lines[block * slice_size: (block + 1) * slice_size]
-    run(0, slines)
+    # slice_size = len(lines) // 4
+    # slines = lines[block * slice_size: (block + 1) * slice_size]
+    run(0, lines)
