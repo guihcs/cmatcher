@@ -11,7 +11,7 @@ base_out = '/projets/melodi/gsantoss/complex-llm/generated-edoal'
 
 
 def match(txt, tokenizer, model):
-    messages = [{"role": "user", "content": txt},]
+    messages = [{"role": "user", "content": txt}, ]
 
     input_ids = tokenizer.apply_chat_template(
         messages,
@@ -60,17 +60,25 @@ def run(i, lines):
     model.eval()
 
     for ci, l in enumerate(lines):
+        file_out = l.replace('generated-prompts', 'generated-edoal').replace('.txt', '.edoal')
+
+        if os.path.exists(file_out):
+            with open(file_out) as f:
+                if len(f.read()) > 0:
+                    continue
+
+        fl = '/'.join(file_out.split('/')[:-1])
+
+        os.makedirs(fl, exist_ok=True)
+
         with open(l) as f:
             txt = f.read()
-            file_out = l.replace('generated-prompts', 'generated-edoal').replace('.txt', '.edoal')
-            fl = '/'.join(file_out.split('/')[:-1])
 
-            os.makedirs(fl, exist_ok=True)
-            with open(file_out, 'w') as fl:
-                fl.write(match(txt, tokenizer, model))
+        with open(file_out, 'w') as fl:
+            fl.write(match(txt, tokenizer, model))
 
-            gc.collect()
-            torch.cuda.empty_cache()
+        gc.collect()
+        torch.cuda.empty_cache()
 
         print(f'Process {i} - {ci} / {len(lines)} : {ci / len(lines) * 100:.2f}%')
 
