@@ -91,12 +91,7 @@
 </sample2>
 <result>
     <?xml version="1.0" encoding="UTF-8"?>
-    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#"
-     xmlns:alext="http://exmo.inrialpes.fr/align/ext/1.0/"
-     xmlns:align="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#"
-     xmlns:edoal="http://ns.inria.org/edoal/1.0/#"
-     xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#" xmlns:alext="http://exmo.inrialpes.fr/align/ext/1.0/" xmlns:align="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#" xmlns:edoal="http://ns.inria.org/edoal/1.0/#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
       <Alignment>
         <xml>yes</xml>
         <level>2EDOAL</level>
@@ -197,8 +192,12 @@
         </map>
         <map>
           <Cell>
-            <entity1 rdf:resource="http://example.org/ontology1/isPresentedAt" />
-            <entity2 rdf:resource="http://example.org/ontology2/isSubmittedTo" />
+            <entity1>
+              <edoal:Relation rdf:about="http://example.org/ontology1/isPresentedAt" />
+            </entity1>
+            <entity2>
+              <edoal:Relation rdf:about="http://example.org/ontology2/isSubmittedTo" />
+            </entity2>
             <relation>=</relation>
             <measure rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</measure>
           </Cell>
