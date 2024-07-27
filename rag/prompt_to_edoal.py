@@ -52,7 +52,7 @@ def run(i, lines):
 
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        device_map='auto',
+        device_map=i,
         quantization_config=quantization_config,
         low_cpu_mem_usage=True
 
@@ -91,7 +91,7 @@ def run(i, lines):
 if __name__ == '__main__':
 
     block = int(sys.argv[1])
-
+    block_count = int(sys.argv[2])
     lines = []
 
     for p, d, fs in os.walk(base_path):
@@ -106,6 +106,11 @@ if __name__ == '__main__':
 
     poll = []
 
-    # slice_size = len(lines) // 4
-    # slines = lines[block * slice_size: (block + 1) * slice_size]
-    run(0, lines)
+    slice_size = len(lines) // block_count
+
+    if block >= block_count - 1:
+        slines = lines[block * slice_size:]
+    else:
+        slines = lines[block * slice_size: (block + 1) * slice_size]
+
+    run(block, slines)
