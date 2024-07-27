@@ -52,7 +52,7 @@ def run(i, lines):
 
     model = AutoModelForCausalLM.from_pretrained(
         model_id,
-        device_map=i,
+        device_map='auto',
         quantization_config=quantization_config,
         low_cpu_mem_usage=True
 
