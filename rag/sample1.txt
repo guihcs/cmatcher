@@ -1,0 +1,73 @@
+<sample1>
+    @prefix lib: <http://example.org/library#> .
+    @prefix dcterms: <http://purl.org/dc/terms/> .
+    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+    lib:Book1 a lib:Book ;
+        dcterms:title "The Catcher in the Rye" ;
+        dcterms:creator lib:Author1 ;
+        lib:hasGenre "Fiction" .
+
+    lib:Author1 a lib:Author ;
+        foaf:name "J.D. Salinger" ;
+        foaf:birthDate "1919-01-01" .
+</sample1>
+<sample2>
+    @prefix pub: <http://example.org/publishing#> .
+    @prefix dcterms: <http://purl.org/dc/terms/> .
+    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+    pub:Book1 a pub:Book ;
+        dcterms:title "To Kill a Mockingbird" ;
+        dcterms:creator pub:Author1 ;
+        pub:publicationYear "1960" .
+
+    pub:Author1 a pub:Author ;
+        foaf:name "Harper Lee" ;
+        pub:hasNationality "American" .
+</sample2>
+<result>
+    <?xml version="1.0" encoding="UTF-8"?>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#"
+      xmlns:alext="http://exmo.inrialpes.fr/align/ext/1.0/"
+      xmlns:align="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#"
+      xmlns:edoal="http://ns.inria.org/edoal/1.0/#"
+      xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+      <Alignment>
+        <xml>yes</xml>
+        <level>2EDOAL</level>
+        <type>**</type>
+        <onto1>
+          <Ontology rdf:about="http://example.org/library#" />
+        </onto1>
+        <onto2>
+          <Ontology rdf:about="http://example.org/publishing#" />
+        </onto2>
+        <map>
+          <Cell>
+            <entity1>
+              <edoal:Class rdf:about="http://example.org/library#Book" />
+            </entity1>
+            <entity2>
+              <edoal:Class rdf:about="http://example.org/publishing#Book" />
+            </entity2>
+            <relation>=</relation>
+            <measure>1.0</measure>
+          </Cell>
+        </map>
+        <map>
+          <Cell>
+            <entity1>
+              <edoal:Class rdf:about="http://example.org/library#Author" />
+            </entity1>
+            <entity2>
+              <edoal:Class rdf:about="http://example.org/publishing#Author" />
+            </entity2>
+            <relation>=</relation>
+            <measure rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</measure>
+          </Cell>
+        </map>
+      </Alignment>
+    </rdf:RDF>
+</result>

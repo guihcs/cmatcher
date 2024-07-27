@@ -9,10 +9,7 @@ from rag_reduce import ont_query_reduce
 
 paths = {
     'conference': '/projets/melodi/gsantoss/data/complex/conference/ont',
-    'populated_conference': '/projets/melodi/gsantoss/data/complex/conference_100/ont',
-    'geolink': '/projets/melodi/gsantoss/data/complex/geolink',
-    'hydrography': '/projets/melodi/gsantoss/data/complex/hydrography_ontology/ontology',
-    'taxon': '/projets/melodi/gsantoss/data/complex/taxon/ont'
+    'geolink': '/projets/melodi/gsantoss/data/complex/geolink'
 }
 
 cqp = '/projets/melodi/gsantoss/data/cqas/prcqas'
@@ -86,222 +83,18 @@ r1 = ont_query_reduce(model, tokenizer, run[1], g1, query, prompt, max_entities=
 r2 = ont_query_reduce(model, tokenizer, run[2], g2, query, prompt, max_entities=10, batch_size=2)
 
 
+sample1_path = sys.argv[2]
+sample2_path = sys.argv[3]
+
 def gen_prompt(r1, r2, query, include_sample1=False, include_sample2=False):
-    sample_prompt = 'Examples of complex alignment between different ontologies:'
-    sample1 = '''<ontology1>
-    @prefix lib: <http://example.org/library#> .
-    @prefix dcterms: <http://purl.org/dc/terms/> .
-    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+    sample_prompt = 'And examples of complex alignment between different ontologies:'
+    with open(sample1_path, 'r') as f:
+        sample1 = f.read()
 
-    lib:Book1 a lib:Book ;
-        dcterms:title "The Catcher in the Rye" ;
-        dcterms:creator lib:Author1 ;
-        lib:hasGenre "Fiction" .
+    with open(sample2_path, 'r') as f:
+        sample2 = f.read()
 
-    lib:Author1 a lib:Author ;
-        foaf:name "J.D. Salinger" ;
-        foaf:birthDate "1919-01-01" .
-</ontology1>
-<ontology2>
-    @prefix pub: <http://example.org/publishing#> .
-    @prefix dcterms: <http://purl.org/dc/terms/> .
-    @prefix foaf: <http://xmlns.com/foaf/0.1/> .
-
-    pub:Book1 a pub:Book ;
-        dcterms:title "To Kill a Mockingbird" ;
-        dcterms:creator pub:Author1 ;
-        pub:publicationYear "1960" .
-
-    pub:Author1 a pub:Author ;
-        foaf:name "Harper Lee" ;
-        pub:hasNationality "American" .
-</ontology2>
-<result>
-    <?xml version="1.0" encoding="utf-8"?>
-    <rdf:RDF xmlns="http://knowledgeweb.semanticweb.org/heterogeneity/alignment"
-             xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-             xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
-             xmlns:align="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#"
-             xmlns:edoal="http://ns.inria.org/edoal/1.0/#">    
-      <Alignment>
-        <xml>yes</xml>
-        <level>2EDOAL</level>
-        <type>**</type>        
-        <onto1>
-          <Ontology rdf:about="http://example.org/library#"/>
-        </onto1>
-        <onto2>
-          <Ontology rdf:about="http://example.org/publishing#"/>
-        </onto2>    
-        <map>
-          <Cell>
-            <entity1 rdf:resource="http://example.org/library#Book"/>
-            <entity2 rdf:resource="http://example.org/publishing#Book"/>
-            <relation>=</relation>
-            <measure>1.0</measure>
-          </Cell>
-        </map>
-        <map>
-          <Cell>
-            <entity1 rdf:resource="http://example.org/library#Author"/>
-            <entity2 rdf:resource="http://example.org/publishing#Author"/>
-            <relation>=</relation>
-            <measure>1.0</measure>
-          </Cell>
-        </map>
-      </Alignment>
-    </rdf:RDF>
-</result>    
-'''
-
-    sample2 = '''<ontology1>
-    @prefix : <http://example.org/ontology1/> .
-    @prefix owl: <http://www.w3.org/2002/07/owl#> .
-    @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-    @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-
-    : ontology a owl:Ontology ;
-      rdfs:label "Paper Ontology" .
-
-    :AcceptedPaper a owl:Class ;
-      rdfs:label "Accepted Paper" ;
-      rdfs:comment "A paper that has been accepted for presentation at a conference" .
-
-    :Author a owl:Class ;
-      rdfs:label "Author" ;
-      rdfs:comment "A person who writes a paper" .
-
-    :Conference a owl:Class ;
-      rdfs:label "Conference" ;
-      rdfs:comment "An event where papers are presented" .
-
-    :hasAuthor a owl:ObjectProperty ;
-      rdfs:label "has author" ;
-      rdfs:domain :AcceptedPaper ;
-      rdfs:range :Author .
-
-    :isPresentedAt a owl:ObjectProperty ;
-      rdfs:label "is presented at" ;
-      rdfs:domain :AcceptedPaper ;
-      rdfs:range :Conference .
-</ontology1>
-<ontology2>
-    @prefix : <http://example.org/ontology2/> .
-    @prefix owl: <http://www.w3.org/2002/07/owl#> .
-    @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
-    @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-
-    : ontology a owl:Ontology ;
-      rdfs:label "Paper Ontology" .
-
-    :Paper a owl:Class ;
-      rdfs:label "Paper" ;
-      rdfs:comment "A document submitted to a conference" .
-
-    :Decision a owl:Class ;
-      rdfs:label "Decision" ;
-      rdfs:comment "A verdict on a paper" .
-
-    :Acceptance a owl:Class ;
-      rdfs:subClassOf :Decision ;
-      rdfs:label "Acceptance" ;
-      rdfs:comment "A positive decision on a paper" .
-
-    :hasAcceptance a owl:ObjectProperty ;
-      rdfs:label "has acceptance" ;
-      rdfs:domain :Paper ;
-      rdfs:range :Acceptance .
-
-    :Author a owl:Class ;
-      rdfs:label "Author" ;
-      rdfs:comment "A person who writes a paper" .
-
-    :Conference a owl:Class ;
-      rdfs:label "Conference" ;
-      rdfs:comment "An event where papers are presented" .
-
-    :hasAuthor a owl:ObjectProperty ;
-      rdfs:label "has author" ;
-      rdfs:domain :Paper ;
-      rdfs:range :Author .
-
-    :isSubmittedTo a owl:ObjectProperty ;
-      rdfs:label "is submitted to" ;
-      rdfs:domain :Paper ;
-      rdfs:range :Conference .
-</ontology2>
-<result>
-    <?xml version="1.0" encoding="utf-8"?>
-    <rdf:RDF xmlns="http://knowledgeweb.semanticweb.org/heterogeneity/alignment"
-           xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-           xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
-           xmlns:align="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#"
-           xmlns:edoal="http://ns.inria.org/edoal/1.0/#">
-        <Alignment>
-          <xml>yes</xml>
-          <level>2EDOAL</level>
-          <type>**</type>
-          <onto1>
-            <Ontology rdf:about="http://example.org/ontology1/"/>
-          </onto1>
-          <onto2>
-            <Ontology rdf:about="http://example.org/ontology2/"/>
-          </onto2>
-          <map>
-            <Cell>
-              <entity1 rdf:resource="http://example.org/ontology1/AcceptedPaper"/>
-              <entity2>
-                <edoal:Class>
-                  <edoal:And>
-                    <edoal:Class rdf:about="http://example.org/ontology2/Paper"/>
-                    <edoal:PropertyRestriction>
-                      <edoal:onProperty rdf:resource="http://example.org/ontology2/hasAcceptance"/>
-                      <edoal:someValuesFrom rdf:resource="http://example.org/ontology2/Acceptance"/>
-                    </edoal:PropertyRestriction>
-                  </edoal:And>
-                </edoal:Class>
-              </entity2>
-              <relation>=</relation>
-              <measure>1.0</measure>
-            </Cell>
-          </map>
-          <map>
-            <Cell>
-              <entity1 rdf:resource="http://example.org/ontology1/Author"/>
-              <entity2 rdf:resource="http://example.org/ontology2/Author"/>
-              <relation>=</relation>
-              <measure>1.0</measure>
-            </Cell>
-          </map>
-          <map>
-            <Cell>
-              <entity1 rdf:resource="http://example.org/ontology1/Conference"/>
-              <entity2 rdf:resource="http://example.org/ontology2/Conference"/>
-              <relation>=</relation>
-              <measure>1.0</measure>
-            </Cell>
-          </map>
-          <map>
-            <Cell>
-              <entity1 rdf:resource="http://example.org/ontology1/hasAuthor"/>
-              <entity2 rdf:resource="http://example.org/ontology2/hasAuthor"/>
-              <relation>=</relation>
-              <measure>1.0</measure>
-            </Cell>
-          </map>
-          <map>
-            <Cell>
-              <entity1 rdf:resource="http://example.org/ontology1/isPresentedAt"/>
-              <entity2 rdf:resource="http://example.org/ontology2/isSubmittedTo"/>
-              <relation>=</relation>
-              <measure>1.0</measure>
-            </Cell>
-          </map>
-        </Alignment>
-    </rdf:RDF>
-</result>'''
-
-    instruction = "Write a file in EDOAL format containing the complex alignment between the ontology1 and ontology2. You don't need to explain yourself. Just give as response the resulting alignment file without saying anything else."
+    instruction = "Write a file in EDOAL format containing the complex alignment between the input ontologies <ontology1> and <ontology2>. You don't need to explain yourself. Just give as response the resulting alignment file without saying anything else."
 
     if query is not None:
         instruction = f'Considering that the input ontologies were filtered to include only the entities related to the query:\n\n{query}\n\n{instruction}'
@@ -315,7 +108,7 @@ def gen_prompt(r1, r2, query, include_sample1=False, include_sample2=False):
     if not include_sample1 and not include_sample2:
         sample_prompt = ''
 
-    return f'''Given the two ontologies bellow:
+    return f'''Given the two ontologies below:
 <ontology1>
 {r1}    
 </ontology1>    
@@ -342,9 +135,6 @@ os.makedirs(f'{out}/{fp}', exist_ok=True)
 
 with open(f'{out}/{fp}/prompt#{fn1}#{fn2}#{cqn}#nq-ns1-ns2.txt', 'w') as f:
     f.write(gen_prompt(r1, r2, None, include_sample1=False, include_sample2=False))
-
-with open(f'{out}/{fp}/prompt#{fn1}#{fn2}#{cqn}#nq-s1-ns2.txt', 'w') as f:
-    f.write(gen_prompt(r1, r2, None, include_sample1=True, include_sample2=False))
 
 with open(f'{out}/{fp}/prompt#{fn1}#{fn2}#{cqn}#nq-s1-s2.txt', 'w') as f:
     f.write(gen_prompt(r1, r2, None, include_sample1=True, include_sample2=True))
