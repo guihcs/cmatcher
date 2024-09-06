@@ -40,7 +40,7 @@ def rag(model, tokenizer, query, prompt, g, max_entities=15, max_length=4096, ba
     dataset = TensorDataset(batch_dict['input_ids'], batch_dict['attention_mask'])
 
     res = []
-    for i, a in tqdm(DataLoader(dataset[:1], batch_size=batch_size, shuffle=False)):
+    for i, a in DataLoader(dataset[:1], batch_size=batch_size, shuffle=False):
         with torch.no_grad():
             output = model(input_ids=i, attention_mask=a)
             embeddings = last_token_pool(output.last_hidden_state, a)
@@ -48,12 +48,8 @@ def rag(model, tokenizer, query, prompt, g, max_entities=15, max_length=4096, ba
 
     qe = torch.cat(res, dim=0)
 
-    base_cache = 'projects/melodi/gsantoss/rag_cache/'
-
-    os.makedirs(base_cache, exist_ok=True)
-
     res = []
-    for i, a in tqdm(DataLoader(dataset[1:], batch_size=batch_size, shuffle=False)):
+    for i, a in DataLoader(dataset[1:], batch_size=batch_size, shuffle=False):
         with torch.no_grad():
             output = model(input_ids=i, attention_mask=a)
             embeddings = last_token_pool(output.last_hidden_state, a)
@@ -69,7 +65,7 @@ def reduce_ont(ls, scores, g, top_n=5, i_max_depth=3, o_max_depth=3):
 
     ng = Graph()
 
-    for e in tqdm(fents):
+    for e in fents:
         traverse(e, g, ng, max_depth=i_max_depth, reverse=True)
         traverse(e, g, ng, max_depth=o_max_depth)
 
