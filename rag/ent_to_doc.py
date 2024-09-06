@@ -4,22 +4,6 @@ from rdflib.namespace import RDF, RDFS, OWL, XSD
 from om.ont import get_n, tokenize
 
 
-# filters = [
-#     (s, RDF.type, OWL.Axiom),
-#     (s, RDF.type, URIRef('http://www.w3.org/2003/11/swrl#Imp')),
-#     (s, RDF.first, None),
-#     (s, OWL.unionOf, None),
-#     (s, OWL.intersectionOf, None),
-#     (s, OWL.oneOf, None),
-#     (s, OWL.complementOf, None),
-#     (s, OWL.distinctMembers, None),
-#     (s, OWL.members, None),
-#     (s, OWL.inverseOf, None),
-#     (s, URIRef('http://www.w3.org/2003/11/swrl#classPredicate'), None),
-#     (s, URIRef('http://www.w3.org/2003/11/swrl#propertyPredicate'), None),
-# ]
-
-
 def get_parents(e, g: Graph, max_iterations=50, max_entities=50):
     parents = []
     for _ in range(max_iterations):
@@ -173,9 +157,7 @@ def gen_doc(e, g: Graph, max_entities=50, max_it=50):
             entity_text = f'InverseOf({to_text_form(v, g)})'
 
         elif (e, RDF.type, OWL.Axiom) in g:
-
             entity_text = 'Axiom'
-
 
         elif (e, RDF.type, URIRef('http://www.w3.org/2003/11/swrl#Imp')) in g:
 

@@ -117,7 +117,6 @@
                   </edoal:RelationDomainRestriction>
                   <edoal:Relation>
                     <edoal:and rdf:parseType="Collection">
-                      <edoal:Class rdf:about="" />
                       <edoal:RelationCoDomainRestriction>
                         <edoal:class>
                           <edoal:Class rdf:about="http://example.org/ontology2/Acceptance" />
