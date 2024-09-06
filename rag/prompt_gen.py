@@ -79,8 +79,8 @@ g2 = Graph().parse(run[2])
 with open(run[0], 'r') as f:
     query = f.read()
 
-r1 = ont_query_reduce(model, tokenizer, run[1], g1, query, prompt, max_entities=10, batch_size=2)
-r2 = ont_query_reduce(model, tokenizer, run[2], g2, query, prompt, max_entities=10, batch_size=2)
+r1 = ont_query_reduce(model, tokenizer, g1, query, prompt, max_entities=10, batch_size=2)
+r2 = ont_query_reduce(model, tokenizer, g2, query, prompt, max_entities=10, batch_size=2)
 
 
 sample1_path = sys.argv[2]
