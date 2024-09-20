@@ -30,8 +30,8 @@ def match(txt, tokenizer, model):
             max_new_tokens=2 * 1024,
             eos_token_id=terminators,
             do_sample=False,
-            temperature=None,
-            top_p=None,
+            temperature=0,
+            top_p=0,
 
         )
     response = outputs[0][input_ids.shape[-1]:]
