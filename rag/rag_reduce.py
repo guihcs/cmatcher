@@ -78,12 +78,12 @@ def traverse(e, g: Graph, ng: Graph, depth=0, max_depth=3, reverse=False):
 
     if not reverse:
 
-        for s, p, o in g.triples((e, None, None)):
+        for s, p, o in sorted(g.triples((e, None, None))):
             ng.add((s, p, o))
             traverse(o, g, ng, depth=depth + 1, max_depth=max_depth, reverse=reverse)
 
     else:
-        for s, p, o in g.triples((None, None, e)):
+        for s, p, o in sorted(g.triples((None, None, e))):
             ng.add((s, p, o))
             traverse(s, g, ng, depth=depth + 1, max_depth=max_depth, reverse=reverse)
 
