@@ -1,4 +1,4 @@
-<sample1>
+<ontology1>
     @prefix lib: <http://example.org/library#> .
     @prefix dcterms: <http://purl.org/dc/terms/> .
     @prefix foaf: <http://xmlns.com/foaf/0.1/> .
@@ -11,8 +11,8 @@
     lib:Author1 a lib:Author ;
         foaf:name "J.D. Salinger" ;
         foaf:birthDate "1919-01-01" .
-</sample1>
-<sample2>
+</ontology1>
+<ontology2>
     @prefix pub: <http://example.org/publishing#> .
     @prefix dcterms: <http://purl.org/dc/terms/> .
     @prefix foaf: <http://xmlns.com/foaf/0.1/> .
@@ -25,7 +25,7 @@
     pub:Author1 a pub:Author ;
         foaf:name "Harper Lee" ;
         pub:hasNationality "American" .
-</sample2>
+</ontology2>
 <result>
     <?xml version="1.0" encoding="UTF-8"?>
     <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"

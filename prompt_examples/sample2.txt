@@ -1,4 +1,4 @@
-<sample1>
+<ontology1>
     @prefix : <http://example.org/ontology1/> .
     @prefix owl: <http://www.w3.org/2002/07/owl#> .
     @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -38,8 +38,8 @@
       rdfs:label "last name of the author" ;
       rdfs:domain :Author ;
       rdfs:range xsd:string .
-</sample1>
-<sample2>
+</ontology1>
+<ontology2>
     @prefix : <http://example.org/ontology2/> .
     @prefix owl: <http://www.w3.org/2002/07/owl#> .
     @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
@@ -88,7 +88,7 @@
       rdfs:label "full name of the author" ;
       rdfs:domain :Author ;
       rdfs:range xsd:string .
-</sample2>
+</ontology2>
 <result>
     <?xml version="1.0" encoding="UTF-8"?>
     <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#" xmlns:alext="http://exmo.inrialpes.fr/align/ext/1.0/" xmlns:align="http://knowledgeweb.semanticweb.org/heterogeneity/alignment#" xmlns:edoal="http://ns.inria.org/edoal/1.0/#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
